@@ -20,6 +20,7 @@ from telegram.ext import (
     ConversationHandler,
     CallbackContext,
 )
+import datetime
 
 # Enable logging
 logging.basicConfig(
@@ -28,83 +29,112 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-GENDER, PHOTO, LOCATION, BIO = range(4)
+# Data structures
+new_training = {"trainer": "", "date": "", "title": "", "description": ""}
+
+
+ACTION_BASE = 0
+TRAINING_DATE = 1
+TRAINING_TITLE = 2
+TRAINING_DESCRIPTION = 3
 
 
 def start(update: Update, context: CallbackContext) -> int:
-    reply_keyboard = [['Boy', 'Girl', 'Other']]
+    reply_keyboard = [['Training anbieten', 'Training absagen'],
+                      ['Trainingsteilnahme', 'Info']]
 
     update.message.reply_text(
-        'Hi! My name is Professor Bot. I will hold a conversation with you. '
-        'Send /cancel to stop talking to me.\n\n'
-        'Are you a boy or a girl?',
+        'Hi! Ich bin der Trainings-Bot.'
+        'Ich helfe dir dein Training zu organisieren.'
+        'Sende /cancel um abzubrechen.\n\n'
+        'Was möchtest du tun?',
         reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True),
     )
 
-    return GENDER
+    return ACTION_BASE
 
 
-def gender(update: Update, context: CallbackContext) -> int:
+def next_weekday(d, weekday):
+    days_ahead = weekday - d.weekday()
+
+    # Target day already happened this week
+    if days_ahead <= 0:
+        days_ahead += 7
+    return d + datetime.timedelta(days_ahead)
+
+
+def get_next_training_dates():
+    today = datetime.date.today()
+    dates = []
+    # Add mon, wed and fri to the dates
+    [dates.append(next_weekday(today, i)) for i in range(0, 5, 2)]
+    dates.sort()
+
+    dates_str = []
+    [dates_str.append(date.strftime("%d.%m.%y")) for date in dates]
+
+    return dates_str
+
+
+def add_training(update: Update, context: CallbackContext) -> int:
     user = update.message.from_user
-    logger.info("Gender of %s: %s", user.first_name, update.message.text)
+    reply_keyboard = [get_next_training_dates()]
+
+    new_training["trainer"] = " ".join([user.first_name, user.last_name])
+
+    logger.info("Training von %s", user.first_name)
     update.message.reply_text(
-        'I see! Please send me a photo of yourself, '
-        'so I know what you look like, or send /skip if you don\'t want to.',
+        'Wann möchtest du das Training anbieten?',
+        reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True),
+    )
+
+    return TRAINING_DATE
+
+
+def add_training_title(update: Update, context: CallbackContext) -> int:
+    user = update.message.from_user
+
+    new_training["date"] = update.message.text
+
+    update.message.reply_text(
+        'Okay, wie lautet der Titel von deinem Training?',
         reply_markup=ReplyKeyboardRemove(),
     )
+    return TRAINING_TITLE
 
-    return PHOTO
 
-
-def photo(update: Update, context: CallbackContext) -> int:
+def add_training_description(update: Update, context: CallbackContext) -> int:
     user = update.message.from_user
-    photo_file = update.message.photo[-1].get_file()
-    photo_file.download('user_photo.jpg')
-    logger.info("Photo of %s: %s", user.first_name, 'user_photo.jpg')
+
+    new_training["title"] = update.message.text
+
     update.message.reply_text(
-        'Gorgeous! Now, send me your location please, ' 'or send /skip if you don\'t want to.'
+        'Ich brauche noch eine Beschreibung zu deinem Training, also z.B.\n'
+        '- Benötigte Utensilien\n'
+        '- Spezielle Playlist\n'
+        '- ...\n\n'
+        'Falls du keine Beschreibung benötigst, kanns du diesen Schritt mit /skip überspringen.',
     )
+    return TRAINING_DESCRIPTION
 
-    return LOCATION
+
+def skip_description(update: Update, context: CallbackContext) -> int:
+    return TRAINING_DESCRIPTION
 
 
-def skip_photo(update: Update, context: CallbackContext) -> int:
+def add_training_finish(update: Update, context: CallbackContext) -> int:
     user = update.message.from_user
-    logger.info("User %s did not send a photo.", user.first_name)
-    update.message.reply_text(
-        'I bet you look great! Now, send me your location please, ' 'or send /skip.'
-    )
 
-    return LOCATION
+    new_training["description"] = update.message.text
 
+    msg = 'Dein Training wird jetzt hinzugefügt. Hier nochmal die Daten zur Übersicht:\n\n' \
+        'Datum: {}\n' \
+        'Trainer/in: {}\n' \
+        'Titel: {}\n' \
+        'Beschreibung: {}\n' \
+        .format(new_training["date"], new_training["trainer"], new_training["title"], new_training["description"])
 
-def location(update: Update, context: CallbackContext) -> int:
-    user = update.message.from_user
-    user_location = update.message.location
-    logger.info(
-        "Location of %s: %f / %f", user.first_name, user_location.latitude, user_location.longitude
-    )
-    update.message.reply_text(
-        'Maybe I can visit you sometime! ' 'At last, tell me something about yourself.'
-    )
-
-    return BIO
-
-
-def skip_location(update: Update, context: CallbackContext) -> int:
-    user = update.message.from_user
-    logger.info("User %s did not send a location.", user.first_name)
-    update.message.reply_text(
-        'You seem a bit paranoid! ' 'At last, tell me something about yourself.'
-    )
-
-    return BIO
-
-
-def bio(update: Update, context: CallbackContext) -> int:
-    user = update.message.from_user
-    logger.info("Bio of %s: %s", user.first_name, update.message.text)
-    update.message.reply_text('Thank you! I hope we can talk again some day.')
+    update.message.reply_text(msg)
 
     return ConversationHandler.END
 
@@ -133,13 +163,10 @@ def main() -> None:
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
-            GENDER: [MessageHandler(Filters.regex('^(Boy|Girl|Other)$'), gender)],
-            PHOTO: [MessageHandler(Filters.photo, photo), CommandHandler('skip', skip_photo)],
-            LOCATION: [
-                MessageHandler(Filters.location, location),
-                CommandHandler('skip', skip_location),
-            ],
-            BIO: [MessageHandler(Filters.text & ~Filters.command, bio)],
+            ACTION_BASE: [MessageHandler(Filters.regex('^Training anbieten$'), add_training)],
+            TRAINING_DATE: [MessageHandler(Filters.text(get_next_training_dates()), add_training_title)],
+            TRAINING_TITLE: [MessageHandler(Filters.regex('.*'), add_training_description), CommandHandler("skip", skip_description)],
+            TRAINING_DESCRIPTION: [MessageHandler(Filters.regex('.*'), add_training_finish)],
         },
         fallbacks=[CommandHandler('cancel', cancel)],
     )
