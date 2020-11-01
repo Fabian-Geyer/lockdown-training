@@ -70,9 +70,9 @@ def main() -> None:
         states={
             c.START: [MessageHandler(Filters.regex('^Training anbieten$'), training.bot_add)],
             c.TRAINING_DATE: [MessageHandler(Filters.text(['02.11.20', '04.11.20', '06.11.20']), training.bot_set_date)],
-            c.TRAINING_TITLE: [MessageHandler(Filters.regex('.*$'), training.bot_set_title),
-                               CommandHandler('skip', skip_description)],
-            c.TRAINING_DESCRIPTION: [MessageHandler(Filters.regex('^.*$'), training.bot_set_description)],
+            c.TRAINING_TITLE: [MessageHandler(Filters.regex('.*$'), training.bot_set_title)],
+            c.TRAINING_DESCRIPTION: [MessageHandler(Filters.regex('^.*$'), training.bot_set_description),
+                                     CommandHandler('skip', skip_description)],
         },
         fallbacks=[CommandHandler('abbrechen', cancel)],
     )

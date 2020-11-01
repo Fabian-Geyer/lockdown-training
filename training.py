@@ -125,17 +125,21 @@ class Training:
 
     def bot_set_description(self, update: Update, context: CallbackContext) -> int:
         user = update.message.from_user
-
         self.set_description(update.message.text)
+        self.finish(update)
+        return c.START
 
+    def bot_skip_description(self, update: Update, context: CallbackContext) -> int:
+        self.set_description("")
+        self.finish(update)
+        return c.START
+
+    def finish(self, update: Update):
         msg = 'Dein Training wird jetzt hinzugefügt. Hier nochmal die Daten zur Übersicht:\n\n' \
               'Datum: {}\n' \
               'Trainer/in: {}\n' \
               'Titel: {}\n' \
               'Beschreibung: {}\n' \
             .format(self.get_date_readable(), self.get_coach_readable(), self.title, self.description)
-
         update.message.reply_text(msg)
-
         util.action_selector(update)
-        return c.START
