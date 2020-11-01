@@ -1,0 +1,29 @@
+{"trainings": [
+    {   
+        "coach": "Stefan Payer",
+        "date": "2014-03-12T13:37:27+00:00", //ISO8601
+        "day": "2020-12-3",
+        "weekday": "Monday",
+        "time": "15:00",
+        "attendees": ["Fabian Geyer", "Stefan Payer"],
+        "subtrainings": [
+            {
+                "coach":"Stefan Payer",
+                "title": "Dehnung",
+                "date": "2014-03-12T13:37:27+00:00",
+                "day": "2020-12-3",
+                "weekday": "Monday",
+                "time": "15:30"
+            },
+            {
+                "coach":"Fabian Geyer",
+                "title": "Handstand",
+                "date": "2014-03-12T13:37:27+00:00",
+                "day": "2020-12-3",
+                "weekday": "Monday",
+                "time": "15:30"
+            }
+        ]
+
+    }
+]}
