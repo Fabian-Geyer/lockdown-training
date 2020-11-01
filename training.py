@@ -69,85 +69,100 @@ class Training:
     def get_coach_readable(self):
         return self.coach.full_name
 
-    def print(self):
-        msg = "Trainer: {}\n" \
-              "Titel: {}\n" \
-              "Beschreibung: {}".format(
-               self.coach, self.title, self.description
-                )
-        print(msg)
-
     def reset(self):
         self.__init__()
 
-    def bot_add(self, update: Update, context: CallbackContext) -> int:
-        self.reset()
-
-        user = update.message.from_user
-        #TODO: Korrekte Funktion hinterlegen
+    def bot_date_selector(self, update: Update):
+        # TODO: Get data from database
         next_trainings = get_next_training_dates()
         self.set_possible_dates(next_trainings)
-
         reply_keyboard = [self.get_possible_dates_readable(), ['/abbrechen']]
-
-        self.set_coach(user)
 
         update.message.reply_text(
             'Wann möchtest du das Training anbieten?',
             reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True),
         )
+
+    def bot_add(self, update: Update, context: CallbackContext) -> int:
+        self.reset()
+        self.set_coach(update.message.from_user)
+        self.bot_date_selector(update)
         return c.TRAINING_DATE
 
     def bot_set_date(self, update: Update, context: CallbackContext) -> int:
         user = update.message.from_user
         selected_date = update.message.text
+
+        if selected_date not in self.get_possible_dates_readable():
+            self.bot_date_selector(update)
+            return c.TRAINING_DATE
+
         self.set_date_idx(selected_date)
         self.set_date_from_idx(self.date_idx)
+        reply_keyboard = [['/abbrechen']]
 
         update.message.reply_text(
             'Okay, wie lautet der Titel von deinem Training (mind. 5 Zeichen)?',
-            reply_markup=ReplyKeyboardRemove(),
+            reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True),
         )
         return c.TRAINING_TITLE
 
     def bot_set_title(self, update: Update, context: CallbackContext) -> int:
         user = update.message.from_user
         title = update.message.text.strip()
+
+        reply_keyboard = [['/{}'.format(c.SKIP), '/{}'.format(c.CANCEL)]]
+
         if len(title) < 5:
             update.message.reply_text(
                 'Der eingegebene Titel ist kürzer als 5 Zeichen.\n'
-                'Bitte gebe einen aussagekräftigen Titel ein.'
+                'Bitte gib einen aussagekräftigen Titel ein.',
+                reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True),
             )
             return c.TRAINING_TITLE
 
         self.set_title(title)
-
-        update.message.reply_text(
-            'Ich brauche noch eine Beschreibung zu deinem Training, also z.B.\n'
-            '- Benötigte Utensilien\n'
-            '- Spezielle Playlist\n'
-            '- ...\n\n'
-            'Falls du keine Beschreibung benötigst, kanns du diesen Schritt mit /skip überspringen.',
+        msg = 'Ich brauche noch eine Beschreibung zu deinem Training, also z.B.\n' \
+              '- Benötigte Utensilien\n' \
+              '- Spezielle Playlist\n' \
+              '- ...\n\n' \
+              'Falls du keine Beschreibung benötigst, kanns du diesen Schritt mit /{} überspringen.'.format(c.SKIP)
+        update.message.reply_text(msg,
+                                  reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True),
         )
         return c.TRAINING_DESCRIPTION
 
     def bot_set_description(self, update: Update, context: CallbackContext) -> int:
         user = update.message.from_user
         self.set_description(update.message.text)
-        self.finish(update)
-        return c.START
+        self.check(update)
+        return c.TRAINING_CHECK
 
     def bot_skip_description(self, update: Update, context: CallbackContext) -> int:
         self.set_description("")
-        self.finish(update)
-        return c.START
+        self.check(update)
+        return c.TRAINING_CHECK
 
-    def finish(self, update: Update):
-        msg = 'Dein Training wird jetzt hinzugefügt. Hier nochmal die Daten zur Übersicht:\n\n' \
+    def bot_check(self, update: Update, context: CallbackContext) -> int:
+        if update.message.text == c.YES:
+            msg = "Trainingsdaten werden übermittelt. Herzlichen Glückwunsch zum Training!"
+            update.message.reply_text(msg)
+            util.action_selector(update)
+            return c.START
+        else:
+            self.check(update)
+            return c.TRAINING_CHECK
+
+    def check(self, update: Update):
+        msg = 'Möchtest du folgendes Training hinzufügen:\n\n' \
               'Datum: {}\n' \
               'Trainer/in: {}\n' \
               'Titel: {}\n' \
               'Beschreibung: {}\n' \
             .format(self.get_date_readable(), self.get_coach_readable(), self.title, self.description)
-        update.message.reply_text(msg)
-        util.action_selector(update)
+
+        reply_keyboard = [['{}'.format(c.YES), '/{}'.format(c.CANCEL)]]
+        update.message.reply_text(msg,
+                                  reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True),)
+
+
