@@ -105,14 +105,22 @@ class Training:
         self.set_date_from_idx(self.date_idx)
 
         update.message.reply_text(
-            'Okay, wie lautet der Titel von deinem Training?',
+            'Okay, wie lautet der Titel von deinem Training (mind. 5 Zeichen)?',
             reply_markup=ReplyKeyboardRemove(),
         )
         return c.TRAINING_TITLE
 
     def bot_set_title(self, update: Update, context: CallbackContext) -> int:
         user = update.message.from_user
-        self.set_title(update.message.text)
+        title = update.message.text.strip()
+        if len(title) < 5:
+            update.message.reply_text(
+                'Der eingegebene Titel ist kürzer als 5 Zeichen.\n'
+                'Bitte gebe einen aussagekräftigen Titel ein.'
+            )
+            return c.TRAINING_TITLE
+
+        self.set_title(title)
 
         update.message.reply_text(
             'Ich brauche noch eine Beschreibung zu deinem Training, also z.B.\n'
