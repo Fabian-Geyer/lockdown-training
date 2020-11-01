@@ -1,7 +1,7 @@
 {"trainings": [
     {   
         "coach": "Stefan Payer",
-        "date": "2014-03-12T13:37:27+00:00", //ISO8601
+        "date": "87956729578", //UNIX timestamp
         "day": "2020-12-3",
         "weekday": "Monday",
         "time": "15:00",
