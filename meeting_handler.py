@@ -1,6 +1,5 @@
 import json
 import logging
-import datetime
 from training import Training, get_next_training_dates
 
 from Database import Database
@@ -14,6 +13,7 @@ from telegram.ext import (
     CallbackContext,
 )
 import constants as c
+import util
 
 # Enable logging
 logging.basicConfig(
@@ -31,21 +31,8 @@ def reset_data():
 
 
 def start(update: Update, context: CallbackContext) -> int:
-    action_selector(update, context)
-
-
-def action_selector(update: Update, context: CallbackContext) -> int:
-    reply_keyboard = [['Training anbieten', 'Training absagen'],
-                      ['Trainingsteilnahme', 'Info']]
-
-    update.message.reply_text(
-        'Hi! Ich bin der Trainings-Bot.'
-        'Ich helfe dir dein Training zu organisieren.'
-        'Sende /cancel um abzubrechen.\n\n'
-        'Was möchtest du tun?',
-        reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True),
-    )
-    return c.ACTION_BASE
+    util.action_selector(update, context)
+    return c.START
 
 
 def cancel(update: Update, context: CallbackContext) -> int:
@@ -55,7 +42,8 @@ def cancel(update: Update, context: CallbackContext) -> int:
         'Bye! I hope we can talk again some day.', reply_markup=ReplyKeyboardRemove()
     )
     reset_data()
-    start(update, context)
+
+    return ConversationHandler.END
 
 
 def skip_description(update: Update, context: CallbackContext) -> int:
@@ -80,8 +68,7 @@ def main() -> None:
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
-            c.START: [MessageHandler(Filters.regex('^.*$'), action_selector)],
-            c.ACTION_BASE: [MessageHandler(Filters.regex('^Training anbieten$'), new_training.bot_add)],
+            c.START: [MessageHandler(Filters.regex('^Training anbieten$'), new_training.bot_add)],
             c.TRAINING_DATE: [MessageHandler(Filters.text(['02.11.20', '04.11.20', '06.11.20']), new_training.bot_set_date)],
             c.TRAINING_TITLE: [MessageHandler(Filters.regex('^(?!/skip).*$'), new_training.bot_set_title),
                              CommandHandler('skip', skip_description)],

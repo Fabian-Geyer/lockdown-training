@@ -1,14 +1,10 @@
 import datetime
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import (
-    Updater,
-    CommandHandler,
-    MessageHandler,
-    Filters,
-    ConversationHandler,
     CallbackContext,
 )
 import constants as c
+import util
 
 
 def next_weekday(d, weekday):
@@ -133,12 +129,13 @@ class Training:
         self.set_description(update.message.text)
 
         msg = 'Dein Training wird jetzt hinzugefügt. Hier nochmal die Daten zur Übersicht:\n\n' \
-              'Datum: {}\n' \
-              'Trainer/in: {}\n' \
-              'Titel: {}\n' \
-              'Beschreibung: {}\n' \
+              '**Datum**: {}\n' \
+              '**Trainer/in**: {}\n' \
+              '**Titel**: {}\n' \
+              '**Beschreibung**: {}\n' \
             .format(self.get_date_readable(), self.get_coach_readable(), self.title, self.description)
 
         update.message.reply_text(msg)
 
+        util.action_selector(update, context)
         return c.START
