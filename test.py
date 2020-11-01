@@ -39,6 +39,11 @@ TRAINING_TITLE = 2
 TRAINING_DESCRIPTION = 3
 
 
+def reset_data():
+    for key in new_training:
+        new_training[key] = ""
+
+
 def start(update: Update, context: CallbackContext) -> int:
     reply_keyboard = [['Training anbieten', 'Training absagen'],
                       ['Trainingsteilnahme', 'Info']]
@@ -145,6 +150,7 @@ def cancel(update: Update, context: CallbackContext) -> int:
     update.message.reply_text(
         'Bye! I hope we can talk again some day.', reply_markup=ReplyKeyboardRemove()
     )
+    reset_data()
 
     return ConversationHandler.END
 
@@ -165,8 +171,8 @@ def main() -> None:
         states={
             ACTION_BASE: [MessageHandler(Filters.regex('^Training anbieten$'), add_training)],
             TRAINING_DATE: [MessageHandler(Filters.text(get_next_training_dates()), add_training_title)],
-            TRAINING_TITLE: [MessageHandler(Filters.regex('.*'), add_training_description), CommandHandler("skip", skip_description)],
-            TRAINING_DESCRIPTION: [MessageHandler(Filters.regex('.*'), add_training_finish)],
+            TRAINING_TITLE: [MessageHandler(Filters.regex('^(?!/skip).*$'), add_training_description), CommandHandler('skip', skip_description)],
+            TRAINING_DESCRIPTION: [MessageHandler(Filters.regex('^.*$'), add_training_finish)],
         },
         fallbacks=[CommandHandler('cancel', cancel)],
     )
