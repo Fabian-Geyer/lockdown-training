@@ -88,7 +88,7 @@ class Training:
         next_trainings = get_next_training_dates()
         self.set_possible_dates(next_trainings)
 
-        reply_keyboard = [self.get_possible_dates_readable()]
+        reply_keyboard = [self.get_possible_dates_readable(), ['/abbrechen']]
 
         self.set_coach(user)
 
@@ -129,13 +129,13 @@ class Training:
         self.set_description(update.message.text)
 
         msg = 'Dein Training wird jetzt hinzugefügt. Hier nochmal die Daten zur Übersicht:\n\n' \
-              '**Datum**: {}\n' \
-              '**Trainer/in**: {}\n' \
-              '**Titel**: {}\n' \
-              '**Beschreibung**: {}\n' \
+              'Datum: {}\n' \
+              'Trainer/in: {}\n' \
+              'Titel: {}\n' \
+              'Beschreibung: {}\n' \
             .format(self.get_date_readable(), self.get_coach_readable(), self.title, self.description)
 
         update.message.reply_text(msg)
 
-        util.action_selector(update, context)
+        util.action_selector(update)
         return c.START
