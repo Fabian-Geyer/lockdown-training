@@ -1,4 +1,9 @@
 import json
+import logging
+import datetime
+from training import Training, get_next_training_dates
+
+from Database import Database
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import (
     Updater,
@@ -8,33 +13,54 @@ from telegram.ext import (
     ConversationHandler,
     CallbackContext,
 )
-from Database import Database
+import constants as c
 
-STATEHANDLER = range(1)
+# Enable logging
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
+)
+
+logger = logging.getLogger(__name__)
+
+# Data structures
+new_training = Training()
+
+
+def reset_data():
+    new_training.reset()
+
 
 def start(update: Update, context: CallbackContext) -> int:
-    reply_keyboard = [[
-        'An Training teilnehmen',
-        'Training anmelden',
-        'Info',
-        'Abbrechen']]
+    action_selector(update, context)
+
+
+def action_selector(update: Update, context: CallbackContext) -> int:
+    reply_keyboard = [['Training anbieten', 'Training absagen'],
+                      ['Trainingsteilnahme', 'Info']]
 
     update.message.reply_text(
-        'Hi, ich bin dein digitaler Coach. was möchtest du machen? '
-        'Tippe /cancel um unser Gespräch abzubrechen.\n\n',
+        'Hi! Ich bin der Trainings-Bot.'
+        'Ich helfe dir dein Training zu organisieren.'
+        'Sende /cancel um abzubrechen.\n\n'
+        'Was möchtest du tun?',
         reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True),
     )
-    return STATEHANDLER
+    return c.ACTION_BASE
 
-def state_handler(update: Update, context: CallbackContext) -> int:
-    pass
 
 def cancel(update: Update, context: CallbackContext) -> int:
     user = update.message.from_user
+    logger.info("User %s canceled the conversation.", user.first_name)
     update.message.reply_text(
         'Bye! I hope we can talk again some day.', reply_markup=ReplyKeyboardRemove()
     )
-    return STATEHANDLER
+    reset_data()
+    start(update, context)
+
+
+def skip_description(update: Update, context: CallbackContext) -> int:
+    return c.TRAINING_DESCRIPTION
+
 
 def main() -> None:
     # initialize database
@@ -54,10 +80,12 @@ def main() -> None:
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
-            STATEHANDLER: [
-                MessageHandler(Filters.regex(
-                    '^(An Training teilnehmen|Training anmelden|Info|Abbrechen)$'),
-                    state_handler)]
+            c.START: [MessageHandler(Filters.regex('^.*$'), action_selector)],
+            c.ACTION_BASE: [MessageHandler(Filters.regex('^Training anbieten$'), new_training.bot_add)],
+            c.TRAINING_DATE: [MessageHandler(Filters.text(['02.11.20', '04.11.20', '06.11.20']), new_training.bot_set_date)],
+            c.TRAINING_TITLE: [MessageHandler(Filters.regex('^(?!/skip).*$'), new_training.bot_set_title),
+                             CommandHandler('skip', skip_description)],
+            c.TRAINING_DESCRIPTION: [MessageHandler(Filters.regex('^.*$'), new_training.bot_set_description)],
         },
         fallbacks=[CommandHandler('cancel', cancel)],
     )
@@ -71,6 +99,7 @@ def main() -> None:
     # SIGTERM or SIGABRT. This should be used most of the time, since
     # start_polling() is non-blocking and will stop the bot gracefully.
     updater.idle()
+
 
 if __name__ == "__main__":
     main()
