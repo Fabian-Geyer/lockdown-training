@@ -1,5 +1,7 @@
 import json
 import pymongo
+from datetime import timedelta
+from datetime import date
 import datetime
 
 class Database():
@@ -18,8 +20,25 @@ class Database():
         self.database = self.client.lockdown_training
         # collection for trainings
         self.trainings = self.database["trainings"]
-
-    def add_training(self, date, coach):
+    
+    def add_training(self, date, time):
+        # make a correct date out of date and time
+        date = datetime.datetime(
+            date.year,
+            date.month,
+            date.day,
+            int(time.split(':')[0]),
+            int(time.split(':')[1])
+            )
+        # create a unix timestamp
+        unix_timestamp = date.strftime("%s")
+        training = {
+            "date": unix_timestamp,
+            "time": time
+        }
+        self.trainings.insert_one(training)
+        
+    def add_subtraining(self, date, coach, title, description):
         training = {
             "date": date,
             "coach": coach
@@ -33,14 +52,24 @@ class Database():
             trainings_list.append(training)
         return trainings_list
 
-    def create_trainings(self, numberOfWeeks, weekdays):
-        pass
+    def create_trainings(self, numberOfDays):
+        # get the weekdays from the config file
+        with open('config.json') as config_file:
+            dbconf = json.load(config_file)
+        training_settings = dbconf["trainings"]
+        # loop through training weekdays
+        for training in training_settings:
+            today = date.today()
+            # loop through all days in the future
+            for i in range(numberOfDays):
+                day = today + timedelta(i)
+                if day.weekday() == training["weekday"]:
+                    res = self.trainings.find_one({"date": str(day)})
+                    if res == None:
+                        self.add_training(date=day, time=training["time"])
+
+
 
     def delete_all_trainings(self):
         self.trainings.drop()
 
-db = Database()
-# db.add_training("2019-12-11-15:00:00", "Fabi")
-db.delete_all_trainings()
-ts = db.get_trainings()
-print(ts)
