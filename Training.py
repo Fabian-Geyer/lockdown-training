@@ -212,6 +212,7 @@ class Training:
         :param context: Chat bot context
         :return: Next state: TRAINING_DATE
         """
+        context.user_data["logger"].info("User %s wants to offer a training", update.message.from_user.full_name)
         training = Training.get_training(context)
         training.reset()
         training.set_coach(update.message.from_user)
@@ -245,6 +246,7 @@ class Training:
             msg,
             reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True),
         )
+        context.user_data["logger"].info("Date for the training: %s", training.get_date_readable())
         return c.TRAINING_TITLE
 
     @staticmethod
@@ -279,7 +281,9 @@ class Training:
         update.message.reply_text(msg,
                                   reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True,
                                                                    resize_keyboard=True),
-        )
+                                  )
+
+        context.user_data["logger"].info("Title for the training: %s", training.get_title())
         return c.TRAINING_DESCRIPTION
 
     @staticmethod
@@ -294,6 +298,7 @@ class Training:
         user = update.message.from_user
         training.set_description(update.message.text)
         training.check(update)
+        context.user_data["logger"].info("Description for the training: %s", training.get_description())
         return c.TRAINING_CHECK
 
     @staticmethod
@@ -307,6 +312,7 @@ class Training:
         training = Training.get_training(context)
         training.set_description("")
         training.check(update)
+        context.user_data["logger"].info("No description provided")
         return c.TRAINING_CHECK
 
     @staticmethod
@@ -324,6 +330,7 @@ class Training:
             db = context.user_data["db"]
             db.add_subtraining(training)
             util.action_selector(update)
+            context.user_data["logger"].info("Training data submitted to the database")
             return c.START
         else:
             training.check(update)
