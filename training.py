@@ -57,9 +57,8 @@ class Training:
         [dates_str.append(date.strftime("%d.%m.%y")) for date in self.possible_dates]
         return dates_str
 
-    def set_date_idx(self, readable_date):
-        dates_readable = self.get_possible_dates_readable()
-        self.date_idx = dates_readable.index(readable_date)
+    def set_date_idx(self, date_idx):
+        self.date_idx = date_idx
 
         return self.date_idx
 
@@ -76,10 +75,20 @@ class Training:
         # TODO: Get data from database
         next_trainings = get_next_training_dates()
         self.set_possible_dates(next_trainings)
-        reply_keyboard = [self.get_possible_dates_readable(), ['/abbrechen']]
+        readable_dates = self.get_possible_dates_readable()
 
+        events = []
+        for idx, date in enumerate(readable_dates):
+            events.append("/{}_{}".format(c.EVENT, idx + 1))
+
+        reply_keyboard = [events, ['/abbrechen']]
+        msg = "Folgende Termine stehen zur Auswahl:\n"
+        for idx, event in enumerate(events):
+            msg += "{}: {}\n".format(event, readable_dates[idx])
+
+        msg += "\nWelchen Termin möchtest du auswählen?"
         update.message.reply_text(
-            'Wann möchtest du das Training anbieten?',
+            msg,
             reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True),
         )
 
@@ -91,13 +100,14 @@ class Training:
 
     def bot_set_date(self, update: Update, context: CallbackContext) -> int:
         user = update.message.from_user
-        selected_date = update.message.text
+        selected_date = update.message.text.strip("/{}_".format(c.EVENT))
 
-        if selected_date not in self.get_possible_dates_readable():
+        if not selected_date.isnumeric() or int(selected_date) > len(self.possible_dates):
             self.bot_date_selector(update)
             return c.TRAINING_DATE
 
-        self.set_date_idx(selected_date)
+        date_idx = int(selected_date)
+        self.set_date_idx(date_idx)
         self.set_date_from_idx(self.date_idx)
         reply_keyboard = [['/abbrechen']]
 
@@ -144,7 +154,7 @@ class Training:
         return c.TRAINING_CHECK
 
     def bot_check(self, update: Update, context: CallbackContext) -> int:
-        if update.message.text == c.YES:
+        if update.message.text == "/{}".format(c.YES):
             msg = "Trainingsdaten werden übermittelt. Herzlichen Glückwunsch zum Training!"
             update.message.reply_text(msg)
             util.action_selector(update)
@@ -158,10 +168,11 @@ class Training:
               'Datum: {}\n' \
               'Trainer/in: {}\n' \
               'Titel: {}\n' \
-              'Beschreibung: {}\n' \
-            .format(self.get_date_readable(), self.get_coach_readable(), self.title, self.description)
+              'Beschreibung: {}\n\n' \
+              '/{}    /{}' \
+            .format(self.get_date_readable(), self.get_coach_readable(), self.title, self.description, c.YES, c.CANCEL)
 
-        reply_keyboard = [['{}'.format(c.YES), '/{}'.format(c.CANCEL)]]
+        reply_keyboard = [['/{}'.format(c.YES), '/{}'.format(c.CANCEL)]]
         update.message.reply_text(msg,
                                   reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True),)
 

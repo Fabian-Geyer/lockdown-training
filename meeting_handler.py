@@ -73,7 +73,7 @@ def main() -> None:
             c.TRAINING_TITLE: [MessageHandler(Filters.regex('^(?!/{}).*$'.format(c.CANCEL)), training.bot_set_title)],
             c.TRAINING_DESCRIPTION: [MessageHandler(Filters.regex('^(?!(/{}|/{})).*$'.format(c.CANCEL, c.SKIP)), training.bot_set_description),
                                      CommandHandler(c.SKIP, training.bot_skip_description)],
-            c.TRAINING_CHECK: [MessageHandler(Filters.regex('^(?!({}|/{})).*$'.format(c.YES, c.CANCEL)), training.bot_check)],
+            c.TRAINING_CHECK: [MessageHandler(Filters.regex('^(?!(/{})).*$'.format(c.CANCEL)), training.bot_check)],
         },
         fallbacks=[CommandHandler(c.CANCEL, cancel)],
     )

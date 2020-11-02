@@ -7,4 +7,5 @@ TRAINING_MODIFY = 5
 
 CANCEL = "abbrechen"
 SKIP = "weiter"
-YES = "Ja"
+YES = "ja"
+EVENT = "termin"
