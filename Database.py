@@ -22,6 +22,9 @@ class Database():
         self.trainings = self.database["trainings"]
     
     def add_training(self, date, time):
+        """ 
+        add one training to the database with a unix timestamp
+        """
         # make a correct date out of date and time
         date = datetime.datetime(
             date.year,
@@ -31,7 +34,7 @@ class Database():
             int(time.split(':')[1])
             )
         # create a unix timestamp
-        unix_timestamp = date.strftime("%s")
+        unix_timestamp = int(date.strftime("%s"))
         training = {
             "date": unix_timestamp,
             "time": time
@@ -39,13 +42,18 @@ class Database():
         self.trainings.insert_one(training)
         
     def add_subtraining(self, date, coach, title, description):
-        training = {
-            "date": date,
-            "coach": coach
-        }
-        self.trainings.insert_one(training)
+        pass
+        #training = {
+        #    "date": date,
+        #    "coach": coach
+        #}
+        #self.trainings.insert_one(training)
 
     def get_trainings(self):
+        """
+        return all trainings in the database as a list
+        of dicts
+        """
         trainings = self.trainings.find()
         trainings_list = []
         for training in trainings:
@@ -53,6 +61,8 @@ class Database():
         return trainings_list
 
     def create_trainings(self, numberOfDays):
+        """Create all trainings according to the config
+        file if they don't exist yet """
         # get the weekdays from the config file
         with open('config.json') as config_file:
             dbconf = json.load(config_file)
@@ -68,8 +78,20 @@ class Database():
                     if res == None:
                         self.add_training(date=day, time=training["time"])
 
-
+    def next_trainings(self, number_of_trainings: int):
+        """ return the next n trainings from the database as a
+        list of dicts """
+        trainings_list = self.trainings.find().sort("date")
+        trainings = []
+        for tr in trainings_list:
+            trainings.append(tr)
+        if len(trainings) >= number_of_trainings:
+            trainings = trainings[0:number_of_trainings]
+            return trainings
+            
 
     def delete_all_trainings(self):
+        """
+        delete all training database entries
+        """
         self.trainings.drop()
-
