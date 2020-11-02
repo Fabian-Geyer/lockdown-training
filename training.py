@@ -106,7 +106,7 @@ class Training:
             self.bot_date_selector(update)
             return c.TRAINING_DATE
 
-        date_idx = int(selected_date)
+        date_idx = int(selected_date) - 1
         self.set_date_idx(date_idx)
         self.set_date_from_idx(self.date_idx)
         reply_keyboard = [['/abbrechen']]
