@@ -1,5 +1,5 @@
 import datetime
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
+from telegram import ReplyKeyboardMarkup, Update
 from telegram.ext import (
     CallbackContext,
 )
