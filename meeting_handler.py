@@ -3,7 +3,7 @@ import logging
 from Training import Training
 
 from Database import Database
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
+from telegram import ReplyKeyboardRemove, Update
 from telegram.ext import (
     Updater,
     CommandHandler,
