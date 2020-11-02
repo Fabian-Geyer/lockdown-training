@@ -1,40 +1,76 @@
-from telegram.ext import Updater
-from telegram.ext import CommandHandler
-from telegram.ext import MessageHandler, Filters
+import json
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
+from telegram.ext import (
+    Updater,
+    CommandHandler,
+    MessageHandler,
+    Filters,
+    ConversationHandler,
+    CallbackContext,
+)
+from Database import Database
 
+STATEHANDLER = range(1)
 
-bot_token = '1214145722:AAEDgsafpOseDH-dsp8luQKtlM3AcciC1go'
-# channel id: -1001492255135
+def start(update: Update, context: CallbackContext) -> int:
+    reply_keyboard = [[
+        'An Training teilnehmen',
+        'Training anmelden',
+        'Info',
+        'Abbrechen']]
 
-def start(update, context):
-    context.bot.send_message(
-        chat_id=update.effective_chat.id,
-        text="Hi, ich bin dein virtueller Coach!" +
-        " Wenn du ein Training anbieten willst bist du hier genau richtig")
+    update.message.reply_text(
+        'Hi, ich bin dein digitaler Coach. was möchtest du machen? '
+        'Tippe /cancel um unser Gespräch abzubrechen.\n\n',
+        reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True),
+    )
+    return STATEHANDLER
 
-def echo(update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id, text=update.message.text)
+def state_handler(update: Update, context: CallbackContext) -> int:
+    pass
 
-def caps(update, context):
-    text_caps = ' '.join(context.args).upper()
-    context.bot.send_message(chat_id=update.effective_chat.id, text=text_caps)
+def cancel(update: Update, context: CallbackContext) -> int:
+    user = update.message.from_user
+    update.message.reply_text(
+        'Bye! I hope we can talk again some day.', reply_markup=ReplyKeyboardRemove()
+    )
+    return STATEHANDLER
 
+def main() -> None:
+    # initialize database
+    db = Database()
 
-if __name__ == "__main__":
-    # init some stuff
+    # read token from config file
+    with open('config.json') as config_file:
+        conf = json.load(config_file)
+    bot_token = conf["bot_token"]
+    # Create the Updater and pass it your bot's token.
     updater = Updater(token=bot_token, use_context=True)
+
+    # Get the dispatcher to register handlers
     dispatcher = updater.dispatcher
 
-    # handlers
-    start_handler = CommandHandler('start', start)
-    echo_handler = MessageHandler(Filters.text & (~Filters.command), echo)
-    caps_handler = CommandHandler('caps', caps)
+    # Add conversation handler with the states ....
+    conv_handler = ConversationHandler(
+        entry_points=[CommandHandler('start', start)],
+        states={
+            STATEHANDLER: [
+                MessageHandler(Filters.regex(
+                    '^(An Training teilnehmen|Training anmelden|Info|Abbrechen)$'),
+                    state_handler)]
+        },
+        fallbacks=[CommandHandler('cancel', cancel)],
+    )
 
-    # add stuff to dispatcher
-    dispatcher.add_handler(start_handler)
-    dispatcher.add_handler(echo_handler)
-    dispatcher.add_handler(caps_handler)
+    dispatcher.add_handler(conv_handler)
 
-    # start that shit
+    # Start the Bot
     updater.start_polling()
-    
+
+    # Run the bot until you press Ctrl-C or the process receives SIGINT,
+    # SIGTERM or SIGABRT. This should be used most of the time, since
+    # start_polling() is non-blocking and will stop the bot gracefully.
+    updater.idle()
+
+if __name__ == "__main__":
+    main()
