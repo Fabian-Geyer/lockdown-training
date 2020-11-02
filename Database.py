@@ -1,7 +1,5 @@
 import json
 import pymongo
-from datetime import timedelta
-from datetime import date
 import datetime
 import os
 
@@ -79,10 +77,10 @@ class Database:
         training_settings = db_conf["trainings"]
         # loop through training weekdays
         for training in training_settings:
-            today = date.today()
+            today = datetime.date.today()
             # loop through all days in the future
             for i in range(number_of_days):
-                day = today + timedelta(i)
+                day = today + datetime.timedelta(i)
                 if day.weekday() == training["weekday"]:
                     res = self.trainings.find_one({"date": str(day)})
                     if res is None:
