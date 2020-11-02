@@ -16,6 +16,11 @@ import constants as c
 import util
 import os
 
+logging.basicConfig(
+    format=c.LOG_FORMAT, level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
 
 def start(update: Update, context: CallbackContext) -> int:
     """
@@ -26,17 +31,12 @@ def start(update: Update, context: CallbackContext) -> int:
     """
     # Init data
     # Enable logging
-    logging.basicConfig(
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
-    )
-    logger = logging.getLogger(__name__)
     db = Database(c.CONFIG_FILE)
     training = Training()
 
     # Store data in user context
     context.user_data["db"] = db
     context.user_data["training"] = training
-    context.user_data["logger"] = logger
 
     util.action_selector(update)
     return c.START
@@ -50,7 +50,7 @@ def cancel(update: Update, context: CallbackContext) -> int:
     :return: START
     """
     user = update.message.from_user
-    context.user_data["logger"].info("User %s canceled the conversation.", user.first_name)
+    logger.info("User %s canceled the conversation.", user.first_name)
     update.message.reply_text(
         'Bye! I hope we can talk again some day.', reply_markup=ReplyKeyboardRemove()
     )
@@ -65,11 +65,6 @@ def main(config_file: str) -> bool:
     :param config_file: Path to the config file as string
     :return: False in case of an error before the bot starts
     """
-    # Enable logging
-    logging.basicConfig(
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
-    )
-    logger = logging.getLogger(__name__)
 
     if not os.path.isfile(config_file):
         logger.error("Config file {} not found".format(config_file))

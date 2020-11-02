@@ -13,3 +13,5 @@ EVENT = "termin"
 CONFIG_FILE = "config.json"
 FUTURE_TRAININGS = 3
 MIN_CHARS_TITLE = 5
+
+LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

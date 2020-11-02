@@ -5,10 +5,16 @@ from telegram.ext import (
 )
 import constants as c
 import util
+import logging
+
+logging.basicConfig(
+    format=c.LOG_FORMAT, level=logging.INFO
+)
+logger = logging.getLogger(__name__)
 
 
 class Training:
-    def __init__(self, coach=None, date=None, title="", description="", possible_dates=[],
+    def __init__(self, coach=None, date=None, title="", description="", possible_dates=None,
                  date_idx=-1, date_format_str="%d.%m.%y %H:%M"):
         """
         Initialization of the training object.
@@ -212,7 +218,7 @@ class Training:
         :param context: Chat bot context
         :return: Next state: TRAINING_DATE
         """
-        context.user_data["logger"].info("User %s wants to offer a training", update.message.from_user.full_name)
+        logger.info("User %s wants to offer a training", update.message.from_user.full_name)
         training = Training.get_training(context)
         training.reset()
         training.set_coach(update.message.from_user)
@@ -228,7 +234,6 @@ class Training:
         :return: TRAINING_TITLE on success, TRAINING_DATE else
         """
         training = Training.get_training(context)
-        user = update.message.from_user
         selected_date = update.message.text.strip("/{}_".format(c.EVENT))
 
         if not selected_date.isnumeric() or int(selected_date) > len(training.possible_dates):
@@ -246,7 +251,7 @@ class Training:
             msg,
             reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True),
         )
-        context.user_data["logger"].info("Date for the training: %s", training.get_date_readable())
+        logger.info("Date for the training: %s", training.get_date_readable())
         return c.TRAINING_TITLE
 
     @staticmethod
@@ -258,7 +263,6 @@ class Training:
         :return: TRAINING_DESCRIPTION on success, TRAINING_TITLE else
         """
         training = Training.get_training(context)
-        user = update.message.from_user
         title = update.message.text.strip()
 
         reply_keyboard = [['/{}'.format(c.SKIP), '/{}'.format(c.CANCEL)]]
@@ -277,13 +281,13 @@ class Training:
               '- Benötigte Utensilien\n' \
               '- Spezielle Playlist\n' \
               '- ...\n\n' \
-              'Falls du keine Beschreibung benötigst, kanns du diesen Schritt mit /{} überspringen.'.format(c.SKIP)
+              'Falls du keine Beschreibung benötigst, kannst du diesen Schritt mit /{} überspringen.'.format(c.SKIP)
         update.message.reply_text(msg,
                                   reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True,
                                                                    resize_keyboard=True),
                                   )
 
-        context.user_data["logger"].info("Title for the training: %s", training.get_title())
+        logger.info("Title for the training: %s", training.get_title())
         return c.TRAINING_DESCRIPTION
 
     @staticmethod
@@ -295,10 +299,9 @@ class Training:
         :return: TRAINING_CHECK
         """
         training = Training.get_training(context)
-        user = update.message.from_user
         training.set_description(update.message.text)
         training.check(update)
-        context.user_data["logger"].info("Description for the training: %s", training.get_description())
+        logger.info("Description for the training: %s", training.get_description())
         return c.TRAINING_CHECK
 
     @staticmethod
@@ -312,7 +315,7 @@ class Training:
         training = Training.get_training(context)
         training.set_description("")
         training.check(update)
-        context.user_data["logger"].info("No description provided")
+        logger.info("No description provided")
         return c.TRAINING_CHECK
 
     @staticmethod
@@ -330,9 +333,8 @@ class Training:
             db = context.user_data["db"]
             db.add_subtraining(training)
             util.action_selector(update)
-            context.user_data["logger"].info("Training data submitted to the database")
+            logger.info("Training data submitted to the database")
             return c.START
         else:
             training.check(update)
             return c.TRAINING_CHECK
-
