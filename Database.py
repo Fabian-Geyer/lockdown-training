@@ -1,7 +1,9 @@
-import json
-import pymongo
 import datetime
+import json
 import os
+
+import pymongo
+
 import Training
 
 
@@ -29,7 +31,7 @@ class Database:
         # collection for trainings
         self.trainings = self.database["trainings"]
         return True
-    
+
     def add_training(self, training_date, time):
         """ 
         add one training to the database with a unix timestamp
@@ -49,7 +51,7 @@ class Database:
             "time": time
         }
         self.trainings.insert_one(training)
-        
+
     def add_subtraining(self, training: Training):
         training_data = {
             # TODO: Date may not be needed for subtrainings (but needed to identify the main training)

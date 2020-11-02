@@ -1,11 +1,11 @@
 import datetime
+import logging
+
 from telegram import ReplyKeyboardMarkup, Update, User
-from telegram.ext import (
-    CallbackContext,
-)
+from telegram.ext import CallbackContext
+
 import constants as c
 import util
-import logging
 
 logging.basicConfig(
     format=c.LOG_FORMAT, level=logging.INFO

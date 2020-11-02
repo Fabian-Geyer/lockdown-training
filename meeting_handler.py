@@ -1,8 +1,7 @@
 import json
 import logging
-from Training import Training
+import os
 
-from Database import Database
 from telegram import ReplyKeyboardRemove, Update
 from telegram.ext import (
     Updater,
@@ -12,9 +11,11 @@ from telegram.ext import (
     ConversationHandler,
     CallbackContext,
 )
+
 import constants as c
 import util
-import os
+from Database import Database
+from Training import Training
 
 logging.basicConfig(
     format=c.LOG_FORMAT, level=logging.INFO
