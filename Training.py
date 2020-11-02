@@ -1,5 +1,5 @@
 import datetime
-from telegram import ReplyKeyboardMarkup, Update
+from telegram import ReplyKeyboardMarkup, Update, User
 from telegram.ext import (
     CallbackContext,
 )
@@ -8,8 +8,18 @@ import util
 
 
 class Training:
-    def __init__(self, coach=None, date=datetime.date.today(), title="", description="", possible_dates=[],
+    def __init__(self, coach=None, date=None, title="", description="", possible_dates=[],
                  date_idx=-1, date_format_str="%d.%m.%y %H:%M"):
+        """
+        Initialization of the training object.
+        :param coach: Telegram User object
+        :param date: Training date as datetime
+        :param title: Training title as string
+        :param description: Training description as string
+        :param possible_dates: List of possible dates for this training as list of datetime objects
+        :param date_idx: Index which date of possible_dates the user chose
+        :param date_format_str: Format specifier for human readable dates
+        """
         self.coach = coach
         self.date = date
         self.title = title
@@ -18,59 +28,130 @@ class Training:
         self.date_idx = date_idx
         self.date_format_str = date_format_str
 
-    def set_coach(self, coach):
+    def set_coach(self, coach: User):
+        """
+        Set the coach of a training.
+        :param coach: User object of the telegram chat
+        """
         self.coach = coach
 
-    def set_date(self, date):
+    def set_date(self, date: datetime):
+        """
+        Set the date of this training session.
+        :param date:
+        """
         self.date = date
 
-    def set_date_from_idx(self, idx):
-        self.date = self.possible_dates[idx]
+    def set_date_from_idx(self, idx: int):
+        """
+        Choose the date of the training by the index of the list of possible trainings.
+        :param idx: List index for the list of possible trainings
+        """
+        self.set_date(self.possible_dates[idx])
 
-    def set_title(self, title):
+    def set_title(self, title: str):
+        """
+        Set the title of the training.
+        :param title: Title string
+        """
         self.title = title
 
-    def set_description(self, description):
+    def set_description(self, description: str):
+        """
+        Set the description of the training.
+        :param description: Description string
+        """
         self.description = description
 
-    def set_possible_dates(self, possible_dates):
+    def set_possible_dates(self, possible_dates: list):
+        """
+        Set the list of all possible dates for this training.
+        The user can later choose the date.
+        :param possible_dates: List of datetime dates
+        """
         self.possible_dates = possible_dates
 
-    def get_possible_dates_readable(self):
+    def set_date_idx(self, date_idx: int):
+        """
+        Set the index which of the possible dates the user chose.
+        :param date_idx: List index
+        """
+        self.date_idx = date_idx
+
+    def get_possible_dates_readable(self) -> list:
+        """
+        Get a list of human readable dates of the possible list of dates.
+        :return: List of strings with human readable dates
+        """
         dates_str = []
         [dates_str.append(date.strftime(self.date_format_str)) for date in self.possible_dates]
         return dates_str
 
-    def set_date_idx(self, date_idx):
-        self.date_idx = date_idx
-
-        return self.date_idx
-
-    def get_date(self, format_str="%s"):
+    def get_date(self, format_str="%s") -> str:
+        """
+        Return the training date as string.
+        :param format_str: Specifies the format of the output
+        :return: String representing the training date
+        """
         return self.date.strftime(format_str)
 
-    def get_date_readable(self):
+    def get_date_readable(self) -> str:
+        """
+        Get the training date in a human readable way.
+        The format is specified by self.date_format_str.
+        :return: String representing the training date
+        """
         return self.get_date(self.date_format_str)
 
-    def get_coach_full_name(self):
+    def get_coach_full_name(self) -> str:
+        """
+        Get the full name of the coach as specified in the telegram settings.
+        :return: Full name of the coach
+        """
         return self.coach.full_name
 
-    def get_coach_user_name(self):
+    def get_coach_user_name(self) -> str:
+        """
+        Get the telegram username of the coach.
+        :return: Username of the coach
+        """
         return self.coach.name
 
-    def get_coach(self):
+    def get_coach(self) -> User:
+        """
+        Get the coach as telegram user object.
+        :return: coach object
+        """
         return self.coach
 
-    def get_title(self):
+    def get_title(self) -> str:
+        """
+        Get the title of the training.
+        :return: Title string
+        """
         return self.title
 
-    def get_description(self):
+    def get_description(self) -> str:
+        """
+        Get the description of the training.
+        :return: Description string
+        """
         return self.description
 
     def reset(self):
+        """
+        Initialize the training object with its default values.
+        """
         self.__init__()
 
     def date_selector(self, update: Update, context: CallbackContext):
+        """
+        Display the menu to select a date for the training.
+        The dates are loaded from the mongoDB database.
+        The number of future trainings determines the number of buttons.
+        :param update: Chat bot update object
+        :param context: Chat bot context
+        """
         db = context.user_data["db"]
         next_trainings = db.next_trainings(c.FUTURE_TRAININGS)
 
@@ -96,6 +177,10 @@ class Training:
         )
 
     def check(self, update: Update):
+        """
+        Displays a menu to choose whether the data should be submitted to the database.
+        :param update: Chat bot update object
+        """
         msg = 'Möchtest du folgendes Training hinzufügen:\n\n' \
               'Datum: {}\n' \
               'Trainer/in: {}\n' \
@@ -112,10 +197,21 @@ class Training:
 
     @staticmethod
     def get_training(context: CallbackContext):
+        """
+        Get the training object from the chat context.
+        :param context: Chat bot context
+        :return: Training object
+        """
         return context.user_data["training"]
 
     @staticmethod
     def bot_add(update: Update, context: CallbackContext) -> int:
+        """
+        Initial method when adding a new training. Saves the coach and displays the date selector.
+        :param update: Chat bot update object
+        :param context: Chat bot context
+        :return: Next state: TRAINING_DATE
+        """
         training = Training.get_training(context)
         training.reset()
         training.set_coach(update.message.from_user)
@@ -124,6 +220,12 @@ class Training:
 
     @staticmethod
     def bot_set_date(update: Update, context: CallbackContext) -> int:
+        """
+        Set the date of the training based on the available dates.
+        :param update: Chat bot update object
+        :param context: Chat bot context
+        :return: TRAINING_TITLE on success, TRAINING_DATE else
+        """
         training = Training.get_training(context)
         user = update.message.from_user
         selected_date = update.message.text.strip("/{}_".format(c.EVENT))
@@ -147,6 +249,12 @@ class Training:
 
     @staticmethod
     def bot_set_title(update: Update, context: CallbackContext) -> int:
+        """
+        Set the title of the training. The input must be at least MIN_CHARS_TITLE long.
+        :param update: Chat bot update object
+        :param context: Chat bot context
+        :return: TRAINING_DESCRIPTION on success, TRAINING_TITLE else
+        """
         training = Training.get_training(context)
         user = update.message.from_user
         title = update.message.text.strip()
@@ -176,6 +284,12 @@ class Training:
 
     @staticmethod
     def bot_set_description(update: Update, context: CallbackContext) -> int:
+        """
+        Set the description of the training.
+        :param update: Chat bot update object
+        :param context: Chat bot context
+        :return: TRAINING_CHECK
+        """
         training = Training.get_training(context)
         user = update.message.from_user
         training.set_description(update.message.text)
@@ -184,6 +298,12 @@ class Training:
 
     @staticmethod
     def bot_skip_description(update: Update, context: CallbackContext) -> int:
+        """
+        Skip the description part (leave the description empty)
+        :param update: Chat bot update object
+        :param context: Chat bot context
+        :return: TRAINING_CHECK
+        """
         training = Training.get_training(context)
         training.set_description("")
         training.check(update)
@@ -191,6 +311,12 @@ class Training:
 
     @staticmethod
     def bot_check(update: Update, context: CallbackContext) -> int:
+        """
+        Write the training to the database, if the user agrees.
+        :param update: Chat bot update object
+        :param context: Chat bot context
+        :return: START when agreed, TRAINING_CHECK else
+        """
         training = Training.get_training(context)
         if update.message.text == "/{}".format(c.YES):
             msg = "Trainingsdaten werden übermittelt. Herzlichen Glückwunsch zum Training!"
