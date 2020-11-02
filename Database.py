@@ -52,6 +52,7 @@ class Database:
         
     def add_subtraining(self, training: Training):
         training_data = {
+            # TODO: Date may not be needed for subtrainings (but needed to identify the main training)
             "date": training.get_date("%s"),
             "time": training.get_date("%H:%M"),
             "coach": training.get_coach_full_name(),

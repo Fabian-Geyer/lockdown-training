@@ -79,6 +79,7 @@ def main(config_file=c.CONFIG_FILE) -> None:
     dispatcher = updater.dispatcher
 
     # Add conversation handler with the states ....
+    # TODO: Newlines in description and title are currently not possible
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
