@@ -92,7 +92,7 @@ class Training:
         msg += "\nWelchen Termin möchtest du auswählen?"
         update.message.reply_text(
             msg,
-            reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True),
+            reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True),
         )
 
     def check(self, update: Update):
@@ -106,7 +106,9 @@ class Training:
 
         reply_keyboard = [['/{}'.format(c.YES), '/{}'.format(c.CANCEL)]]
         update.message.reply_text(msg,
-                                  reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True),)
+                                  reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True,
+                                                                   resize_keyboard=True)
+                                  )
 
     @staticmethod
     def get_training(context: CallbackContext):
@@ -139,7 +141,7 @@ class Training:
 
         update.message.reply_text(
             msg,
-            reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True),
+            reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True),
         )
         return c.TRAINING_TITLE
 
@@ -156,7 +158,7 @@ class Training:
                   "Bitte gib einen aussagekräftigen Titel ein.".format(c.MIN_CHARS_TITLE)
             update.message.reply_text(
                 msg,
-                reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True),
+                reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True),
             )
             return c.TRAINING_TITLE
 
@@ -167,7 +169,8 @@ class Training:
               '- ...\n\n' \
               'Falls du keine Beschreibung benötigst, kanns du diesen Schritt mit /{} überspringen.'.format(c.SKIP)
         update.message.reply_text(msg,
-                                  reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True),
+                                  reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True,
+                                                                   resize_keyboard=True),
         )
         return c.TRAINING_DESCRIPTION
 

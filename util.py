@@ -10,5 +10,5 @@ def action_selector(update: Update):
         'Ich helfe dir dein Training zu organisieren.'
         'Sende /abbrechen um zum Start zurückzukehren.\n\n'
         'Was möchtest du tun?',
-        reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True),
+        reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True),
     )
