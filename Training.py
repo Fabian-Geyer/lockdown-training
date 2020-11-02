@@ -8,13 +8,15 @@ import util
 
 
 class Training:
-    def __init__(self, coach=None, date=datetime.date.today(), title="", description="", possible_dates=[], date_idx=-1):
+    def __init__(self, coach=None, date=datetime.date.today(), title="", description="", possible_dates=[],
+                 date_idx=-1, date_format_str="%d.%m.%y %H:%M"):
         self.coach = coach
         self.date = date
         self.title = title
         self.description = description
         self.possible_dates = possible_dates
         self.date_idx = date_idx
+        self.date_format_str = date_format_str
 
     def set_coach(self, coach):
         self.coach = coach
@@ -36,7 +38,7 @@ class Training:
 
     def get_possible_dates_readable(self):
         dates_str = []
-        [dates_str.append(self.get_date_readable(date)) for date in self.possible_dates]
+        [dates_str.append(date.strftime(self.date_format_str)) for date in self.possible_dates]
         return dates_str
 
     def set_date_idx(self, date_idx):
@@ -44,8 +46,11 @@ class Training:
 
         return self.date_idx
 
-    def get_date_readable(self, date):
-        return self.get_date(date, "%d.%m.%y %H:%M")
+    def get_date(self, format_str="%s"):
+        return self.date.strftime(format_str)
+
+    def get_date_readable(self):
+        return self.get_date(self.date_format_str)
 
     def get_coach_full_name(self):
         return self.coach.full_name
@@ -102,10 +107,6 @@ class Training:
         reply_keyboard = [['/{}'.format(c.YES), '/{}'.format(c.CANCEL)]]
         update.message.reply_text(msg,
                                   reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True),)
-
-    @staticmethod
-    def get_date(date, format_str="%s"):
-        return date.strftime(format_str)
 
     @staticmethod
     def get_training(context: CallbackContext):
