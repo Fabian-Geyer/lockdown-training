@@ -9,3 +9,7 @@ CANCEL = "abbrechen"
 SKIP = "weiter"
 YES = "ja"
 EVENT = "termin"
+
+CONFIG_FILE = "config.json"
+FUTURE_TRAININGS = 3
+MIN_CHARS_TITLE = 5

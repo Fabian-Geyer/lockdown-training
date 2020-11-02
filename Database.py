@@ -2,16 +2,17 @@ import json
 import pymongo
 import datetime
 import os
+import Training
 
 
 class Database:
-    def __init__(self, config_file="config.json"):
-        self.connect()
-        self.config_file = os.path.abspath(config_file)
+    def __init__(self, config_file):
+        self.config_file = config_file
         self.connect_string = ""
         self.client = None
         self.database = None
         self.trainings = None
+        self.connect()
 
     def connect(self):
         # get configuration
@@ -49,12 +50,17 @@ class Database:
         }
         self.trainings.insert_one(training)
         
-    def add_subtraining(self, training_date, coach, title, description):
-        pass
-        # training = {
-        #     "date": training_date,
-        #     "coach": coach
-        # }
+    def add_subtraining(self, training: Training):
+        training_data = {
+            "date": training.get_date("%s"),
+            "time": training.get_date("%H:%M"),
+            "coach": training.get_coach_full_name(),
+            "coach_user": training.get_coach_user_name(),
+            "title": training.get_title(),
+            "description": training.get_description(),
+        }
+        # TODO: Write object to database
+        return
         # self.trainings.insert_one(training)
 
     def get_trainings(self):
@@ -92,6 +98,7 @@ class Database:
         trainings_list = self.trainings.find().sort("date")
         trainings = []
         for tr in trainings_list:
+            tr["date"] = datetime.datetime.fromtimestamp(tr["date"])
             trainings.append(tr)
         if len(trainings) >= number_of_trainings:
             trainings = trainings[0:number_of_trainings]

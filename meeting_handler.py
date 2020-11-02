@@ -1,6 +1,6 @@
 import json
 import logging
-from training import Training, get_next_training_dates
+from Training import Training
 
 from Database import Database
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
@@ -14,6 +14,7 @@ from telegram.ext import (
 )
 import constants as c
 import util
+import os
 
 # Enable logging
 logging.basicConfig(
@@ -22,15 +23,22 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-# Data structures
-training = Training()
 
-
-def reset_data():
+def reset_data(context: CallbackContext):
+    training = context.user_data["training"]
     training.reset()
 
 
 def start(update: Update, context: CallbackContext) -> int:
+
+    # Init data
+    db = Database(c.CONFIG_FILE)
+    training = Training()
+
+    # Store data in user context
+    context.user_data["db"] = db
+    context.user_data["training"] = training
+
     util.action_selector(update)
     return c.START
 
@@ -41,7 +49,7 @@ def cancel(update: Update, context: CallbackContext) -> int:
     update.message.reply_text(
         'Bye! I hope we can talk again some day.', reply_markup=ReplyKeyboardRemove()
     )
-    reset_data()
+    reset_data(context)
     util.action_selector(update)
     return c.START
 
@@ -50,13 +58,19 @@ def skip_description(update: Update, context: CallbackContext) -> int:
     return c.TRAINING_DESCRIPTION
 
 
-def main() -> None:
+def main(config_file=c.CONFIG_FILE) -> None:
     # initialize database
-    db = Database()
+
+    if not os.path.isfile(config_file):
+        logger.error("Config file {} not found".format(config_file))
+        return
+
+    db = Database(config_file)
 
     # read token from config file
-    with open('config.json') as config_file:
-        conf = json.load(config_file)
+    with open(config_file) as f:
+        conf = json.load(f)
+
     bot_token = conf["bot_token"]
     # Create the Updater and pass it your bot's token.
     updater = Updater(token=bot_token, use_context=True)
@@ -68,12 +82,13 @@ def main() -> None:
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
-            c.START: [MessageHandler(Filters.regex('^Training anbieten$'), training.bot_add)],
-            c.TRAINING_DATE: [MessageHandler(Filters.regex('^(?!/{}).*$'.format(c.CANCEL)), training.bot_set_date)],
-            c.TRAINING_TITLE: [MessageHandler(Filters.regex('^(?!/{}).*$'.format(c.CANCEL)), training.bot_set_title)],
-            c.TRAINING_DESCRIPTION: [MessageHandler(Filters.regex('^(?!(/{}|/{})).*$'.format(c.CANCEL, c.SKIP)), training.bot_set_description),
-                                     CommandHandler(c.SKIP, training.bot_skip_description)],
-            c.TRAINING_CHECK: [MessageHandler(Filters.regex('^(?!(/{})).*$'.format(c.CANCEL)), training.bot_check)],
+            c.START: [MessageHandler(Filters.regex('^Training anbieten$'), Training.bot_add)],
+            c.TRAINING_DATE: [MessageHandler(Filters.regex('^(?!/{}).*$'.format(c.CANCEL)), Training.bot_set_date)],
+            c.TRAINING_TITLE: [MessageHandler(Filters.regex('^(?!/{}).*$'.format(c.CANCEL)), Training.bot_set_title)],
+            c.TRAINING_DESCRIPTION: [MessageHandler(Filters.regex('^(?!(/{}|/{})).*$'.format(c.CANCEL, c.SKIP)),
+                                                    Training.bot_set_description),
+                                     CommandHandler(c.SKIP, Training.bot_skip_description)],
+            c.TRAINING_CHECK: [MessageHandler(Filters.regex('^(?!(/{})).*$'.format(c.CANCEL)), Training.bot_check)],
         },
         fallbacks=[CommandHandler(c.CANCEL, cancel)],
     )
