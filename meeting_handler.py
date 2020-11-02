@@ -83,14 +83,14 @@ def main(config_file=c.CONFIG_FILE) -> None:
         entry_points=[CommandHandler('start', start)],
         states={
             c.START: [MessageHandler(Filters.regex('^Training anbieten$'), Training.bot_add)],
-            c.TRAINING_DATE: [MessageHandler(Filters.regex('^(?!/{}).*$'.format(c.CANCEL)), Training.bot_set_date)],
+            c.TRAINING_DATE: [MessageHandler(Filters.regex('^/{}_[0-9]+$'.format(c.EVENT)), Training.bot_set_date)],
             c.TRAINING_TITLE: [MessageHandler(Filters.regex('^(?!/{}).*$'.format(c.CANCEL)), Training.bot_set_title)],
             c.TRAINING_DESCRIPTION: [MessageHandler(Filters.regex('^(?!(/{}|/{})).*$'.format(c.CANCEL, c.SKIP)),
                                                     Training.bot_set_description),
                                      CommandHandler(c.SKIP, Training.bot_skip_description)],
             c.TRAINING_CHECK: [MessageHandler(Filters.regex('^(?!(/{})).*$'.format(c.CANCEL)), Training.bot_check)],
         },
-        fallbacks=[CommandHandler(c.CANCEL, cancel)],
+        fallbacks=[MessageHandler(Filters.command, cancel)],
     )
 
     dispatcher.add_handler(conv_handler)
