@@ -1,4 +1,3 @@
-import datetime
 import logging
 
 from telegram import ReplyKeyboardMarkup, Update, ParseMode
@@ -6,7 +5,6 @@ from telegram.ext import CallbackContext
 
 import constants as c
 import util
-from datetime import datetime
 
 logging.basicConfig(
     format=c.LOG_FORMAT, level=logging.INFO
@@ -16,12 +14,9 @@ logger = logging.getLogger(__name__)
 
 def bot_attend(update: Update, context: CallbackContext) -> int:
     logger.info("User %s wants to attend a training", update.message.from_user.name)
-    training = util.get_training(context)
     db = util.get_db(context)
-    user = update.message.from_user
 
     commands = []
-    subtrainings = []
     msg = "An welchem Training möchtest du teilnehmen?\n\n"
 
     next_trainings = db.next_trainings(c.FUTURE_TRAININGS)
@@ -34,7 +29,9 @@ def bot_attend(update: Update, context: CallbackContext) -> int:
         if len(sub_trainings) == 0:
             msg += "Noch keine Trainings vorhanden\n"
         for st in t["subtrainings"]:
-            msg += "/training_{}_{}: {}\n".format(idx, sub_idx, st["title"])
+            command = "/training_{}_{}".format(idx, sub_idx)
+            commands.append([command])
+            msg += "{}: {}\n".format(command, st["title"])
             description = st["description"]
             msg += "<u>Trainer:</u> {}\n".format(st["coach"])
             if len(description) > 0:
@@ -73,8 +70,17 @@ def bot_attend_save(update: Update, context: CallbackContext) -> int:
 
     training = next_trainings[t_idx]
     sub_training = training["subtrainings"][st_idx]
-    training_date = int(training["date"].strftime("%s"))
+    date = training["date"]
+    training_date = int(date.strftime("%s"))
     db.subtraining_add_attendee(user, training_date, sub_training["coach_user"])
+
+    msg = "Glückwunsch, du nimmst am *{}* an *{}* mit *{}* teil \U0001F4AA\U0001F4AA\U0001F4AA \n\n" \
+          "Wir freuen uns auf dich!".format(date.strftime(c.DATE_FORMAT), sub_training["title"].replace("\n", " "),
+                                            sub_training["coach"])
+    update.message.reply_text(
+        msg,
+        parse_mode=ParseMode.MARKDOWN,
+    )
 
     util.action_selector(update)
     return c.START
