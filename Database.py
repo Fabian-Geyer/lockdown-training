@@ -33,8 +33,12 @@ class Database:
         return True
 
     def add_training(self, training_date, time):
-        """ 
-        add one training to the database with a unix timestamp
+        """add one training to the database with a unix timestamp
+
+        :param training_date: day of the new training
+        :type training_date: datetime.date object
+        :param time: time of the training in 24h format
+        :type time: str
         """
         # make a correct date out of date and time
         training_date = datetime.datetime(
@@ -48,23 +52,27 @@ class Database:
         unix_timestamp = int(training_date.strftime("%s"))
         training = {
             "date": unix_timestamp,
-            "time": time
+            "time": time,
+            "subtrainings": []
         }
         self.trainings.insert_one(training)
 
     def add_subtraining(self, training: Training):
+        # TODO: Date may not be needed for subtrainings (but needed to identify the main training)
         training_data = {
-            # TODO: Date may not be needed for subtrainings (but needed to identify the main training)
-            "date": training.get_date("%s"),
+            "date": int(training.get_date("%s")),
             "time": training.get_date("%H:%M"),
             "coach": training.get_coach_full_name(),
             "coach_user": training.get_coach_user_name(),
             "title": training.get_title(),
             "description": training.get_description(),
         }
-        # TODO: Write object to database
+        # add the subtraining to the main training
+        self.trainings.update(
+            { "date": training_data["date"] },
+            { "$push": { "subtrainings": training_data }}
+        )
         return
-        # self.trainings.insert_one(training)
 
     def get_trainings(self):
         """
@@ -112,3 +120,8 @@ class Database:
         delete all training database entries
         """
         self.trainings.drop()
+
+#import constants as c
+#db = Database(c.CONFIG_FILE)
+#db.delete_all_trainings()
+#db.create_trainings(14)
