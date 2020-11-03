@@ -108,6 +108,7 @@ class Database:
             "coach_user": training.get_coach_user_name(),
             "title": training.get_title(),
             "description": training.get_description(),
+            "attendees": []
         }
         # check if user already has a training on that day
         main_training = self.trainings.find_one({ "date": training_data["date"] })
@@ -231,6 +232,5 @@ class Database:
 
     def delete_all_trainings(self):
         """delete all training database entries
-
         """
         self.trainings.drop()
