@@ -206,7 +206,9 @@ class Database:
         trainings = []
         for tr in trainings_list:
             tr["date"] = datetime.datetime.fromtimestamp(tr["date"])
-            trainings.append(tr)
+            now = datetime.datetime.now()
+            if now < tr["date"]:
+                trainings.append(tr)
         if len(trainings) >= number_of_trainings:
             trainings = trainings[0:number_of_trainings]
             return trainings
