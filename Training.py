@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 class Training:
     def __init__(self, coach=None, date=None, title="", description="", possible_dates=None,
-                 date_idx=-1, date_format_str="%d.%m.%y %H:%M"):
+                 date_idx=-1, date_format_str=c.DATE_FORMAT):
         """
         Initialization of the training object.
         :param coach: Telegram User object

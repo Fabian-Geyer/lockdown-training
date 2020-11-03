@@ -20,4 +20,6 @@ CANCEL_TRAINING = "Training absagen"
 ATTEND_TRAINING = "Trainingsteilnahme"
 INFO = "INFO"
 
+DATE_FORMAT = "%a, %d.%m.%y %H:%M"
+
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
