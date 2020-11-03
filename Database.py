@@ -32,6 +32,14 @@ class Database:
         self.trainings = self.database["trainings"]
         return True
 
+    def reset_all(self):
+        """Reset the database and rebuild the trainings
+        """
+        import constants as c
+        db = Database(c.CONFIG_FILE)
+        db.delete_all_trainings()
+        db.create_trainings(14)
+
     def add_training(self, training_date, time):
         """add one training to the database with a unix timestamp
 
@@ -53,9 +61,37 @@ class Database:
         training = {
             "date": unix_timestamp,
             "time": time,
+            "attendees": [],
             "subtrainings": []
         }
         self.trainings.insert_one(training)
+
+    def subtraining_add_attendee(self, user:str, date: int, coach_user: str):
+        """add an attendee to a subtraining"""
+        # find the correct training by date
+        training = self.trainings.find_one({ "date": date })
+        # delete user from all subtrainings
+        for subtraining in training["subtrainings"]:
+            if user in subtraining["attendees"]:
+                subtraining["attendees"].remove(user)
+        for subtraining in training["subtrainings"]:
+            if coach_user == subtraining["coach_user"]:
+                subtraining["attendees"].append(user)
+                break
+        # overwrite the old object
+        self.trainings.replace_one({ "date": date }, training )
+        return "user removed from all other trainings and added to desired subtraining"
+        
+
+    def training_add_attendee(self, user: str, date: int):
+        """add an attendee to a training"""
+        # check if user already is an attendee
+        training = self.trainings.find_one({ "date": date })
+        if user in training["attendees"]:
+            return "user already is attendee"
+        # add the user to the training
+        self.trainings.update({ "date": date }, { "$push": { "attendees": user }})
+        return "user was added"
 
     def add_subtraining(self, training: Training):
         """Add a subtraining to the database, only if the given
@@ -73,6 +109,7 @@ class Database:
             "coach_user": training.get_coach_user_name(),
             "title": training.get_title(),
             "description": training.get_description(),
+            "attendees": []
         }
         # check if user already has a training on that day
         main_training = self.trainings.find_one({ "date": training_data["date"] })
@@ -146,8 +183,3 @@ class Database:
 
         """
         self.trainings.drop()
-
-#import constants as c
-#db = Database(c.CONFIG_FILE)
-#db.delete_all_trainings()
-#db.create_trainings(14)
