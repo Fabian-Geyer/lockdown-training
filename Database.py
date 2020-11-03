@@ -32,6 +32,14 @@ class Database:
         self.trainings = self.database["trainings"]
         return True
 
+    def reset_all(self):
+        """Reset the database and rebuild the trainings
+        """
+        import constants as c
+        db = Database(c.CONFIG_FILE)
+        db.delete_all_trainings()
+        db.create_trainings(14)
+
     def add_training(self, training_date, time):
         """add one training to the database with a unix timestamp
 
@@ -53,9 +61,36 @@ class Database:
         training = {
             "date": unix_timestamp,
             "time": time,
+            "attendees": [],
             "subtrainings": []
         }
         self.trainings.insert_one(training)
+
+    def subtraining_add_attendee(self, user:str, date: int, coach_user: str):
+        """add an attendee to a subtraining"""
+        # find the correct training by date
+        training = self.trainings.find_one({ "date": date })
+        # delete user from all subtrainings
+        for subtraining in training["subtrainings"]:
+            if user in subtraining["attendees"]:
+                subtraining["attendees"].remove(user)
+        for subtraining in training["subtrainings"]:
+            if coach_user == subtraining["coach_user"]:
+                subtraining["attendees"].append(user)
+                break
+        # overwrite the old object
+        self.trainings.replace_one({ "date": date }, training )
+        return "user removed from all other trainings and added to desired subtraining"
+
+    def training_add_attendee(self, user: str, date: int):
+        """add an attendee to a training"""
+        # check if user already is an attendee
+        training = self.trainings.find_one({ "date": date })
+        if user in training["attendees"]:
+            return "user already is attendee"
+        # add the user to the training
+        self.trainings.update({ "date": date }, { "$push": { "attendees": user }})
+        return "user was added"
 
     def add_subtraining(self, training: Training):
         """Add a subtraining to the database, only if the given
@@ -100,6 +135,57 @@ class Database:
             trainings_list.append(training)
         return trainings_list
 
+    def get_my_trainings_as_coach(self, coach_user: str)->list:
+        """return all the subtrainings the user is
+        leading as a coach
+
+        :param coach_user: string with username
+        :type coach_user: str
+        :return: returns the subtrainings as a list of dicts
+        :rtype: list
+        """
+        trainings = self.trainings.find({})
+        my_trainings = []
+        for training in trainings:
+            for subtraining in training["subtrainings"]:
+                if coach_user == subtraining["coach_user"]:
+                    my_trainings.append(subtraining)
+        return my_trainings
+
+    def get_subtrainings(self, user: str) -> list:
+        """get all subtrainings for a user
+
+        :param user: string with telegram username
+        :type user: str
+        :return: list of dicts with all subtrainings
+        :rtype: list
+        """
+        trainings = self.trainings.find({})
+        user_subtrainings = []
+        for training in trainings:
+            for sub in training["subtrainings"]:
+                if user in sub["attendees"]:
+                    user_subtrainings.append(sub)
+        return user_subtrainings
+
+    def cancel_subtrainings(self, date: int, user: str):
+        """remove the user from his/her subtraining by date
+
+        :param date: date as integer in unix timestamp
+        :type date: int
+        :param user: string with telegram username
+        :type user: str
+        :return: return success message
+        :rtype: str
+        """
+        training = self.trainings.find_one({ "date": date })
+        for subtraining in training["subtrainings"]:
+            if user in subtraining["attendees"]:
+                subtraining["attendees"].remove(user)
+        # replace the old database entry
+        self.trainings.replace_one({ "date": date }, training )
+        return "user was removed"
+
     def create_trainings(self, number_of_days: int):
         """Read training weekdays and time from the config file and 
         Create all trainings accordingly for the time period of the 
@@ -136,7 +222,9 @@ class Database:
         trainings = []
         for tr in trainings_list:
             tr["date"] = datetime.datetime.fromtimestamp(tr["date"])
-            trainings.append(tr)
+            now = datetime.datetime.now()
+            if now < tr["date"]:
+                trainings.append(tr)
         if len(trainings) >= number_of_trainings:
             trainings = trainings[0:number_of_trainings]
             return trainings
