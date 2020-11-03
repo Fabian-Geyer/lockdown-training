@@ -136,6 +136,23 @@ class Database:
             trainings_list.append(training)
         return trainings_list
 
+    def get_my_trainings_as_coach(self, coach_user: str)->list:
+        """return all the subtrainings the user is
+        leading as a coach
+
+        :param coach_user: string with username
+        :type coach_user: str
+        :return: returns the subtrainings as a list of dicts
+        :rtype: list
+        """
+        trainings = self.trainings.find({})
+        my_trainings = []
+        for training in trainings:
+            for subtraining in training["subtrainings"]:
+                if coach_user == subtraining["coach_user"]:
+                    my_trainings.append(subtraining)
+        return my_trainings
+
     def get_subtrainings(self, user: str) -> list:
         """get all subtrainings for a user
 
@@ -217,3 +234,7 @@ class Database:
         """delete all training database entries
         """
         self.trainings.drop()
+
+import constants as c
+db = Database(c.CONFIG_FILE)
+db.reset_all()
