@@ -12,6 +12,7 @@ from telegram.ext import (
     CallbackContext,
 )
 
+import attend_training
 import constants as c
 import util
 from Database import Database
@@ -68,7 +69,7 @@ def select_action(update: Update, context: CallbackContext) -> int:
     if usr_input == c.OFFER_TRAINING:
         return Training.bot_add(update, context)
     elif usr_input == c.ATTEND_TRAINING:
-        return Training.bot_attend(update, context)
+        return attend_training.bot_attend(update, context)
     else:
         return c.START
 
@@ -108,8 +109,8 @@ def main(config_file: str) -> bool:
                                                     Training.bot_set_description),
                                      CommandHandler(c.SKIP, Training.bot_skip_description)],
             c.TRAINING_CHECK: [MessageHandler(Filters.regex('^(?!(/{})).*$'.format(c.CANCEL)), Training.bot_check)],
-            c.TRAINING_SELECT_SUBTRAINING: [MessageHandler(Filters.regex('^/{}_[0-9]+$'.format(c.EVENT)),
-                                                           Training.bot_attend_date)]
+            c.TRAINING_ADD: [MessageHandler(Filters.regex('^/{}_[0-9]+$'.format(c.EVENT)),
+                                                           attend_training.bot_attend_save)]
         },
         fallbacks=[MessageHandler(Filters.command, cancel)],
     )
