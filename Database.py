@@ -4,7 +4,7 @@ import os
 
 import pymongo
 
-import Training
+from Training import Training
 
 
 class Database:
@@ -81,7 +81,7 @@ class Database:
         # overwrite the old object
         self.trainings.replace_one({ "date": date }, training )
         return "user removed from all other trainings and added to desired subtraining"
-        
+
     def training_add_attendee(self, user: str, date: int):
         """add an attendee to a training"""
         # check if user already is an attendee
@@ -137,7 +137,7 @@ class Database:
         return trainings_list
 
     def get_my_trainings_as_coach(self, coach_user: str)->list:
-        """return all the subtrainings the user is 
+        """return all the subtrainings the user is
         leading as a coach
 
         :param coach_user: string with username
@@ -186,7 +186,7 @@ class Database:
         # replace the old database entry
         self.trainings.replace_one({ "date": date }, training )
         return "user was removed"
-        
+
     def create_trainings(self, number_of_days: int):
         """Read training weekdays and time from the config file and 
         Create all trainings accordingly for the time period of the 

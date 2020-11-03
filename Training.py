@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 class Training:
     def __init__(self, coach=None, date=None, title="", description="", possible_dates=None,
-                 date_idx=-1, date_format_str="%d.%m.%y %H:%M"):
+                 date_idx=-1, date_format_str=c.DATE_FORMAT):
         """
         Initialization of the training object.
         :param coach: Telegram User object
@@ -202,15 +202,6 @@ class Training:
                                   )
 
     @staticmethod
-    def get_training(context: CallbackContext):
-        """
-        Get the training object from the chat context.
-        :param context: Chat bot context
-        :return: Training object
-        """
-        return context.user_data["training"]
-
-    @staticmethod
     def bot_add(update: Update, context: CallbackContext) -> int:
         """
         Initial method when adding a new training. Saves the coach and displays the date selector.
@@ -219,8 +210,7 @@ class Training:
         :return: Next state: TRAINING_DATE
         """
         logger.info("User %s wants to offer a training", update.message.from_user.full_name)
-        training = Training.get_training(context)
-        training.reset()
+        training = util.get_training(context)
         training.set_coach(update.message.from_user)
         training.date_selector(update, context)
         return c.TRAINING_DATE
@@ -233,16 +223,9 @@ class Training:
         :param context: Chat bot context
         :return: TRAINING_TITLE on success, TRAINING_DATE else
         """
-        training = Training.get_training(context)
-        selected_date = update.message.text.strip("/{}_".format(c.EVENT))
-
-        if not selected_date.isnumeric() or int(selected_date) > len(training.possible_dates):
-            training.date_selector(update)
+        training = util.get_training(context)
+        if util.parse_bot_date(update, training, c.TRAINING_DATE) == c.TRAINING_DATE:
             return c.TRAINING_DATE
-
-        date_idx = int(selected_date) - 1
-        training.set_date_idx(date_idx)
-        training.set_date_from_idx(training.date_idx)
         reply_keyboard = [['/{}'.format(c.CANCEL)]]
 
         msg = "Okay, wie lautet der Titel von deinem Training (mind. {} Zeichen)?".format(c.MIN_CHARS_TITLE)
@@ -262,7 +245,7 @@ class Training:
         :param context: Chat bot context
         :return: TRAINING_DESCRIPTION on success, TRAINING_TITLE else
         """
-        training = Training.get_training(context)
+        training = util.get_training(context)
         title = update.message.text.strip()
 
         reply_keyboard = [['/{}'.format(c.SKIP), '/{}'.format(c.CANCEL)]]
@@ -298,7 +281,7 @@ class Training:
         :param context: Chat bot context
         :return: TRAINING_CHECK
         """
-        training = Training.get_training(context)
+        training = util.get_training(context)
         training.set_description(update.message.text)
         training.check(update)
         logger.info("Description for the training: %s", training.get_description())
@@ -312,7 +295,7 @@ class Training:
         :param context: Chat bot context
         :return: TRAINING_CHECK
         """
-        training = Training.get_training(context)
+        training = util.get_training(context)
         training.set_description("")
         training.check(update)
         logger.info("No description provided")
@@ -326,7 +309,7 @@ class Training:
         :param context: Chat bot context
         :return: START when agreed, TRAINING_CHECK else
         """
-        training = Training.get_training(context)
+        training = util.get_training(context)
         if update.message.text == "/{}".format(c.YES):
             msg = "Trainingsdaten werden übermittelt. Herzlichen Glückwunsch zum Training!"
             update.message.reply_text(msg)
