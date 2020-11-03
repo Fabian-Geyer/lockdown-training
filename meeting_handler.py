@@ -60,6 +60,19 @@ def cancel(update: Update, context: CallbackContext) -> int:
     return c.START
 
 
+def select_action(update: Update, context: CallbackContext) -> int:
+
+    util.reset_data(context)
+    usr_input = update.message.text
+
+    if usr_input == c.OFFER_TRAINING:
+        return Training.bot_add(update, context)
+    elif usr_input == c.ATTEND_TRAINING:
+        return Training.bot_attend(update, context)
+    else:
+        return c.START
+
+
 def main(config_file: str) -> bool:
     """
     Main function of the training telegram bot
@@ -87,13 +100,16 @@ def main(config_file: str) -> bool:
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
-            c.START: [MessageHandler(Filters.regex('^Training anbieten$'), Training.bot_add)],
+            c.START: [MessageHandler(Filters.regex('^({}|{})$'.format(c.OFFER_TRAINING, c.ATTEND_TRAINING)),
+                                     select_action)],
             c.TRAINING_DATE: [MessageHandler(Filters.regex('^/{}_[0-9]+$'.format(c.EVENT)), Training.bot_set_date)],
             c.TRAINING_TITLE: [MessageHandler(Filters.regex('^(?!/{}).*$'.format(c.CANCEL)), Training.bot_set_title)],
             c.TRAINING_DESCRIPTION: [MessageHandler(Filters.regex('^(?!(/{}|/{})).*$'.format(c.CANCEL, c.SKIP)),
                                                     Training.bot_set_description),
                                      CommandHandler(c.SKIP, Training.bot_skip_description)],
             c.TRAINING_CHECK: [MessageHandler(Filters.regex('^(?!(/{})).*$'.format(c.CANCEL)), Training.bot_check)],
+            c.TRAINING_SELECT_SUBTRAINING: [MessageHandler(Filters.regex('^/{}_[0-9]+$'.format(c.EVENT)),
+                                                           Training.bot_attend_date)]
         },
         fallbacks=[MessageHandler(Filters.command, cancel)],
     )

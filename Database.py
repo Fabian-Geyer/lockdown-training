@@ -4,7 +4,7 @@ import os
 
 import pymongo
 
-import Training
+from Training import Training
 
 
 class Database:
@@ -146,8 +146,3 @@ class Database:
 
         """
         self.trainings.drop()
-
-#import constants as c
-#db = Database(c.CONFIG_FILE)
-#db.delete_all_trainings()
-#db.create_trainings(14)
