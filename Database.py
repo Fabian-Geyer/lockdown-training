@@ -58,7 +58,14 @@ class Database:
         self.trainings.insert_one(training)
 
     def add_subtraining(self, training: Training):
-        # TODO: Date may not be needed for subtrainings (but needed to identify the main training)
+        """Add a subtraining to the database, only if the given
+        user has not signed in a training yet that day
+
+        :param training: Training object with user chosen data
+        :type training: Training
+        :return: Returns False if training already set by user
+        :rtype: bool
+        """
         training_data = {
             "date": int(training.get_date("%s")),
             "time": training.get_date("%H:%M"),
@@ -67,17 +74,25 @@ class Database:
             "title": training.get_title(),
             "description": training.get_description(),
         }
+        # check if user already has a training on that day
+        main_training = self.trainings.find_one({ "date": training_data["date"] })
+        for subtraining in main_training["subtrainings"]:
+            if training_data["coach_user"] == subtraining["coach_user"]:
+                return False
+        
         # add the subtraining to the main training
         self.trainings.update(
             { "date": training_data["date"] },
             { "$push": { "subtrainings": training_data }}
         )
-        return
+        return True
 
     def get_trainings(self):
-        """
-        return all trainings in the database as a list
+        """return all trainings in the database as a list
         of dicts
+
+        :return: list of dicts with all trainings and their data
+        :rtype: list of dicts
         """
         trainings = self.trainings.find()
         trainings_list = []
@@ -85,9 +100,14 @@ class Database:
             trainings_list.append(training)
         return trainings_list
 
-    def create_trainings(self, number_of_days):
-        """Create all trainings according to the config
-        file if they don't exist yet """
+    def create_trainings(self, number_of_days: int):
+        """Read training weekdays and time from the config file and 
+        Create all trainings accordingly for the time period of the 
+        next n days
+
+        :param number_of_days: How many days ahead trainings get created
+        :type number_of_days: int
+        """
         # get the weekdays from the config file
         with open('config.json') as config_file:
             db_conf = json.load(config_file)
@@ -104,8 +124,14 @@ class Database:
                         self.add_training(training_date=day, time=training["time"])
 
     def next_trainings(self, number_of_trainings: int):
-        """ return the next n trainings from the database as a
-        list of dicts """
+        """return the next n trainings from the database as a
+        list of dicts
+
+        :param number_of_trainings: How many trainings will be returned
+        :type number_of_trainings: int
+        :return: the trainings as a List of dicts
+        :rtype: list of dicts
+        """
         trainings_list = self.trainings.find().sort("date")
         trainings = []
         for tr in trainings_list:
@@ -116,8 +142,8 @@ class Database:
             return trainings
 
     def delete_all_trainings(self):
-        """
-        delete all training database entries
+        """delete all training database entries
+
         """
         self.trainings.drop()
 
