@@ -22,13 +22,13 @@ def bot_attend(update: Update, context: CallbackContext) -> int:
 
     commands = []
     subtrainings = []
-    msg = ""
+    msg = "An welchem Training möchtest du teilnehmen?\n\n"
 
     next_trainings = db.next_trainings(c.FUTURE_TRAININGS)
 
     idx = 1
     for t in next_trainings:
-        msg += "\n<b>{}. Training am {}</b>\n".format(idx, t["date"].strftime(c.DATE_FORMAT))
+        msg += "<b>{}. Training am {}</b>\n".format(idx, t["date"].strftime(c.DATE_FORMAT))
         sub_idx = 1
         sub_trainings = t["subtrainings"]
         if len(sub_trainings) == 0:
@@ -59,12 +59,19 @@ def bot_attend(update: Update, context: CallbackContext) -> int:
 def bot_attend_save(update: Update, context: CallbackContext) -> int:
     logger.info("User %s attend a training", update.message.from_user.name)
 
+    user = update.message.from_user.name
     msg = update.message.text
     msg.strip("/{}".format(c.TRAINING))
 
-    training_idx = msg.split("_")
-    training = util.get_training(context)
+    [t_idx, st_idx] = msg.split("_")
+    t_idx -= 1
+    st_idx -= 1
     db = util.get_db(context)
+    next_trainings = db.next_trainings(c.FUTURE_TRAININGS)
+
+    training = next_trainings[t_idx]
+    sub_training = training["subtrainings"][st_idx]
+    db.subtraining_add_attendee(user, training["date"], sub_training["coach_user"])
 
     util.action_selector(update)
     return c.START
