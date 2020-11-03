@@ -137,7 +137,7 @@ class Database:
         return trainings_list
 
     def get_my_trainings_as_coach(self, coach_user: str)->list:
-        """return all the subtrainings the user is
+        """return all the subtrainings the user is 
         leading as a coach
 
         :param coach_user: string with username
@@ -234,7 +234,3 @@ class Database:
         """delete all training database entries
         """
         self.trainings.drop()
-
-import constants as c
-db = Database(c.CONFIG_FILE)
-db.reset_all()
