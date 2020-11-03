@@ -1,5 +1,8 @@
 import json
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
+import logging
+import os
+
+from telegram import ReplyKeyboardRemove, Update
 from telegram.ext import (
     Updater,
     CommandHandler,
@@ -8,41 +11,70 @@ from telegram.ext import (
     ConversationHandler,
     CallbackContext,
 )
-from Database import Database
 
-STATEHANDLER = range(1)
+import constants as c
+import util
+from Database import Database
+from Training import Training
+
+logging.basicConfig(
+    format=c.LOG_FORMAT, level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
 
 def start(update: Update, context: CallbackContext) -> int:
-    reply_keyboard = [[
-        'An Training teilnehmen',
-        'Training anmelden',
-        'Info',
-        'Abbrechen']]
+    """
+    Entrypoint for the telegram chat bot.
+    :param update: Chat bot update object
+    :param context: Chat bot context
+    :return: START
+    """
+    # Init data
+    # Enable logging
+    db = Database(c.CONFIG_FILE)
+    training = Training()
 
-    update.message.reply_text(
-        'Hi, ich bin dein digitaler Coach. was möchtest du machen? '
-        'Tippe /cancel um unser Gespräch abzubrechen.\n\n',
-        reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True),
-    )
-    return STATEHANDLER
+    # Store data in user context
+    context.user_data["db"] = db
+    context.user_data["training"] = training
 
-def state_handler(update: Update, context: CallbackContext) -> int:
-    pass
+    util.action_selector(update)
+    return c.START
+
 
 def cancel(update: Update, context: CallbackContext) -> int:
+    """
+    Function to cancel the current progress. Restarts the conversation and resets the data.
+    :param update: Chat bot update object
+    :param context: Chat bot context
+    :return: START
+    """
     user = update.message.from_user
+    logger.info("User %s canceled the conversation.", user.first_name)
     update.message.reply_text(
         'Bye! I hope we can talk again some day.', reply_markup=ReplyKeyboardRemove()
     )
-    return STATEHANDLER
+    util.reset_data(context)
+    util.action_selector(update)
+    return c.START
 
-def main() -> None:
-    # initialize database
-    db = Database()
+
+def main(config_file: str) -> bool:
+    """
+    Main function of the training telegram bot
+    :param config_file: Path to the config file as string
+    :return: False in case of an error before the bot starts
+    """
+
+    if not os.path.isfile(config_file):
+        logger.error("Config file {} not found".format(config_file))
+        return False
 
     # read token from config file
-    with open('config.json') as config_file:
-        conf = json.load(config_file)
+    with open(config_file) as f:
+        conf = json.load(f)
+
     bot_token = conf["bot_token"]
     # Create the Updater and pass it your bot's token.
     updater = Updater(token=bot_token, use_context=True)
@@ -51,15 +83,19 @@ def main() -> None:
     dispatcher = updater.dispatcher
 
     # Add conversation handler with the states ....
+    # TODO: Newlines in description and title are currently not possible
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
-            STATEHANDLER: [
-                MessageHandler(Filters.regex(
-                    '^(An Training teilnehmen|Training anmelden|Info|Abbrechen)$'),
-                    state_handler)]
+            c.START: [MessageHandler(Filters.regex('^Training anbieten$'), Training.bot_add)],
+            c.TRAINING_DATE: [MessageHandler(Filters.regex('^/{}_[0-9]+$'.format(c.EVENT)), Training.bot_set_date)],
+            c.TRAINING_TITLE: [MessageHandler(Filters.regex('^(?!/{}).*$'.format(c.CANCEL)), Training.bot_set_title)],
+            c.TRAINING_DESCRIPTION: [MessageHandler(Filters.regex('^(?!(/{}|/{})).*$'.format(c.CANCEL, c.SKIP)),
+                                                    Training.bot_set_description),
+                                     CommandHandler(c.SKIP, Training.bot_skip_description)],
+            c.TRAINING_CHECK: [MessageHandler(Filters.regex('^(?!(/{})).*$'.format(c.CANCEL)), Training.bot_check)],
         },
-        fallbacks=[CommandHandler('cancel', cancel)],
+        fallbacks=[MessageHandler(Filters.command, cancel)],
     )
 
     dispatcher.add_handler(conv_handler)
@@ -72,5 +108,6 @@ def main() -> None:
     # start_polling() is non-blocking and will stop the bot gracefully.
     updater.idle()
 
+
 if __name__ == "__main__":
-    main()
+    main(c.CONFIG_FILE)
