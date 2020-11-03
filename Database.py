@@ -152,6 +152,24 @@ class Database:
                     user_subtrainings.append(sub)
         return user_subtrainings
 
+    def cancel_subtrainings(self, date: int, user: str):
+        """remove the user from his/her subtraining by date
+
+        :param date: date as integer in unix timestamp
+        :type date: int
+        :param user: string with telegram username
+        :type user: str
+        :return: return success message
+        :rtype: str
+        """
+        training = self.trainings.find_one({ "date": date })
+        for subtraining in training["subtrainings"]:
+            if user in subtraining["attendees"]:
+                subtraining["attendees"].remove(user)
+        # replace the old database entry
+        self.trainings.replace_one({ "date": date }, training )
+        return "user was removed"
+        
     def create_trainings(self, number_of_days: int):
         """Read training weekdays and time from the config file and 
         Create all trainings accordingly for the time period of the 
@@ -195,6 +213,5 @@ class Database:
 
     def delete_all_trainings(self):
         """delete all training database entries
-
         """
         self.trainings.drop()
