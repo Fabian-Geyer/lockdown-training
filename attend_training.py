@@ -61,17 +61,20 @@ def bot_attend_save(update: Update, context: CallbackContext) -> int:
 
     user = update.message.from_user.name
     msg = update.message.text
-    msg.strip("/{}".format(c.TRAINING))
+    msg = msg.strip("/{}_".format(c.TRAINING))
+
+    logger.info(msg)
 
     [t_idx, st_idx] = msg.split("_")
-    t_idx -= 1
-    st_idx -= 1
+    t_idx = int(t_idx) - 1
+    st_idx = int(st_idx) - 1
     db = util.get_db(context)
     next_trainings = db.next_trainings(c.FUTURE_TRAININGS)
 
     training = next_trainings[t_idx]
     sub_training = training["subtrainings"][st_idx]
-    db.subtraining_add_attendee(user, training["date"], sub_training["coach_user"])
+    training_date = int(training["date"].strftime("%s"))
+    db.subtraining_add_attendee(user, training_date, sub_training["coach_user"])
 
     util.action_selector(update)
     return c.START

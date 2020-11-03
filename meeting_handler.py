@@ -109,8 +109,8 @@ def main(config_file: str) -> bool:
                                                     Training.bot_set_description),
                                      CommandHandler(c.SKIP, Training.bot_skip_description)],
             c.TRAINING_CHECK: [MessageHandler(Filters.regex('^(?!(/{})).*$'.format(c.CANCEL)), Training.bot_check)],
-            c.TRAINING_ADD: [MessageHandler(Filters.regex('^/{}_[0-9]+$'.format(c.EVENT)),
-                                                           attend_training.bot_attend_save)]
+            c.TRAINING_ADD: [MessageHandler(Filters.regex('^/{}_[0-9]+_[0-9]+$'.format(c.TRAINING)),
+                                            attend_training.bot_attend_save)]
         },
         fallbacks=[MessageHandler(Filters.command, cancel)],
     )
