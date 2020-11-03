@@ -82,7 +82,6 @@ class Database:
         self.trainings.replace_one({ "date": date }, training )
         return "user removed from all other trainings and added to desired subtraining"
         
-
     def training_add_attendee(self, user: str, date: int):
         """add an attendee to a training"""
         # check if user already is an attendee
@@ -136,6 +135,22 @@ class Database:
         for training in trainings:
             trainings_list.append(training)
         return trainings_list
+
+    def get_subtrainings(self, user: str) -> list:
+        """get all subtrainings for a user
+
+        :param user: string with telegram username
+        :type user: str
+        :return: list of dicts with all subtrainings
+        :rtype: list
+        """
+        trainings = self.trainings.find({})
+        user_subtrainings = []
+        for training in trainings:
+            for sub in training["subtrainings"]:
+                if user in sub["attendees"]:
+                    user_subtrainings.append(sub)
+        return user_subtrainings
 
     def create_trainings(self, number_of_days: int):
         """Read training weekdays and time from the config file and 
