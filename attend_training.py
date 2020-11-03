@@ -13,14 +13,22 @@ logger = logging.getLogger(__name__)
 
 
 def bot_attend(update: Update, context: CallbackContext) -> int:
+    """
+    Display an overview of all available trainings and subtrainings
+    :param update: Chat bot update object
+    :param context: Chat bot context
+    :return: c.TRAINING_ADD
+    """
     logger.info("User %s wants to attend a training", update.message.from_user.name)
+
+    # Get database data
     db = util.get_db(context)
+    next_trainings = db.next_trainings(c.FUTURE_TRAININGS)
 
     commands = []
     msg = "An welchem Training möchtest du teilnehmen?\n\n"
 
-    next_trainings = db.next_trainings(c.FUTURE_TRAININGS)
-
+    # Build string to display all trainings and subtrainings
     idx = 1
     for t in next_trainings:
         msg += "<b>{}. Training am {}</b>\n".format(idx, t["date"].strftime(c.DATE_FORMAT))
@@ -40,9 +48,6 @@ def bot_attend(update: Update, context: CallbackContext) -> int:
             sub_idx += 1
         idx += 1
 
-    next_trainings_dates = []
-    [next_trainings_dates.append(t["date"]) for t in next_trainings]
-
     commands.append(["/{}".format(c.CANCEL)])
     update.message.reply_text(
         msg,
@@ -54,24 +59,32 @@ def bot_attend(update: Update, context: CallbackContext) -> int:
 
 
 def bot_attend_save(update: Update, context: CallbackContext) -> int:
+    """
+    Parse the user selection and add the user as attendee to the selected subtraining
+    :param update: Chat bot update object
+    :param context: Chat bot context
+    :return: c.START
+    """
     logger.info("User %s attend a training", update.message.from_user.name)
 
     user = update.message.from_user.name
     msg = update.message.text
     msg = msg.strip("/{}_".format(c.TRAINING))
 
-    logger.info(msg)
-
+    # Identify which training and subtraining the user chose, based on the indices of the command
     [t_idx, st_idx] = msg.split("_")
     t_idx = int(t_idx) - 1
     st_idx = int(st_idx) - 1
+
+    # Extract the necessary data from the database
     db = util.get_db(context)
     next_trainings = db.next_trainings(c.FUTURE_TRAININGS)
-
     training = next_trainings[t_idx]
     sub_training = training["subtrainings"][st_idx]
     date = training["date"]
     training_date = int(date.strftime("%s"))
+
+    # Add the user as attendee to the selected subtraining
     db.subtraining_add_attendee(user, training_date, sub_training["coach_user"])
 
     msg = "Glückwunsch, du nimmst am *{}* an *{}* mit *{}* teil \U0001F4AA\U0001F4AA\U0001F4AA \n\n" \
@@ -82,5 +95,6 @@ def bot_attend_save(update: Update, context: CallbackContext) -> int:
         parse_mode=ParseMode.MARKDOWN,
     )
 
+    # Start again
     util.action_selector(update)
     return c.START

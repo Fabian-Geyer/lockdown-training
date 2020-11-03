@@ -11,11 +11,12 @@ def action_selector(update: Update):
     reply_keyboard = [[c.OFFER_TRAINING, c.CANCEL_TRAINING],
                       [c.ATTEND_TRAINING, c.INFO]]
 
+    msg = 'Hi! Ich bin der Trainings-Bot.' \
+          'Ich helfe dir dein Training zu organisieren.' \
+          'Sende /{} um zum /{} zurückzukehren.\n\n' \
+          'Was möchtest du tun?'.format(c.CANCEL, c.START)
     update.message.reply_text(
-        'Hi! Ich bin der Trainings-Bot.'
-        'Ich helfe dir dein Training zu organisieren.'
-        'Sende /abbrechen um zum Start zurückzukehren.\n\n'
-        'Was möchtest du tun?',
+        msg,
         reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True),
     )
 

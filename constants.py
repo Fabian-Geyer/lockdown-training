@@ -6,6 +6,7 @@ TRAINING_CHECK = 4
 TRAINING_MODIFY = 5
 TRAINING_ADD = 6
 
+START = "start"
 CANCEL = "abbrechen"
 SKIP = "weiter"
 YES = "ja"

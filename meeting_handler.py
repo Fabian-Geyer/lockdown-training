@@ -99,7 +99,7 @@ def main(config_file: str) -> bool:
     # Add conversation handler with the states ....
     # TODO: Newlines in description and title are currently not possible
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler('start', start)],
+        entry_points=[CommandHandler(c.START, start)],
         states={
             c.START: [MessageHandler(Filters.regex('^({}|{})$'.format(c.OFFER_TRAINING, c.ATTEND_TRAINING)),
                                      select_action)],
