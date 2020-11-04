@@ -1,4 +1,5 @@
 import json
+import locale
 import logging
 import os
 
@@ -18,6 +19,7 @@ import util
 from Database import Database
 from Training import Training
 
+locale.setlocale(locale.LC_TIME, 'de_DE.UTF-8')
 logging.basicConfig(
     format=c.LOG_FORMAT, level=logging.INFO
 )
@@ -62,7 +64,6 @@ def cancel(update: Update, context: CallbackContext) -> int:
 
 
 def select_action(update: Update, context: CallbackContext) -> int:
-
     util.reset_data(context)
     usr_input = update.message.text
 
