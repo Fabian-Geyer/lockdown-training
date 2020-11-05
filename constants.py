@@ -5,22 +5,36 @@ TRAINING_DESCRIPTION = 3
 TRAINING_CHECK = 4
 TRAINING_MODIFY = 5
 TRAINING_ADD = 6
+CANCEL_TRAINING = 7
+CANCEL_TRAINING_ATTENDEE = 8
+CANCEL_TRAINING_COACH = 9
 
-START = "start"
-CANCEL = "abbrechen"
-SKIP = "weiter"
-YES = "ja"
-EVENT = "termin"
-TRAINING = "training"
+COACH = 100
+ATTENDEE = 101
+
+CMD_START = "start"
+CMD_CANCEL = "abbrechen"
+CMD_SKIP = "weiter"
+CMD_YES = "ja"
+CMD_EVENT = "termin"
+CMD_TRAINING = "training"
+CMD_ATTENDEE = "teilnehmer"
+CMD_COACH = "trainer"
 
 CONFIG_FILE = "config.json"
 FUTURE_TRAININGS = 3
 MIN_CHARS_TITLE = 5
 
-OFFER_TRAINING = "Training anbieten"
-CANCEL_TRAINING = "Training absagen"
-ATTEND_TRAINING = "Trainingsteilnahme"
-INFO = "Info"
+CMD_OFFER_TRAINING = "Training anbieten"
+CMD_CANCEL_TRAINING = "Training absagen"
+CMD_ATTEND_TRAINING = "Trainingsteilnahme"
+CMD_INFO = "Info"
+
+MENU = [
+    [CMD_OFFER_TRAINING, CMD_CANCEL_TRAINING],
+    [CMD_ATTEND_TRAINING, CMD_INFO],
+]
+
 
 DATE_FORMAT = "%a, %d.%m.%y um %H:%M"
 

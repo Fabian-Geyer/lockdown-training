@@ -5,6 +5,7 @@ import os
 import pymongo
 
 from Training import Training
+import constants as c
 
 
 class Database:
@@ -136,12 +137,14 @@ class Database:
             trainings_list.append(training)
         return trainings_list
 
-    def get_my_trainings_as_coach(self, coach_user: str)->list:
+    def get_my_trainings(self, user: str, role: int) -> list:
         """return all the subtrainings the user is
-        leading as a coach
+        in as specified in the role
 
-        :param coach_user: string with username
-        :type coach_user: str
+        :param role: Specify the role of the user (can be COACH or ATTENDEE)
+        :type role: int
+        :param user: string with username
+        :type user: str
         :return: returns the subtrainings as a list of dicts
         :rtype: list
         """
@@ -149,7 +152,8 @@ class Database:
         my_trainings = []
         for training in trainings:
             for subtraining in training["subtrainings"]:
-                if coach_user == subtraining["coach_user"]:
+                if (user == subtraining["coach_user"] and role == c.COACH)\
+                        or user in subtraining["attendees"] and role == c.ATTENDEE:
                     my_trainings.append(subtraining)
         return my_trainings
 

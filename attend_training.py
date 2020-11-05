@@ -48,7 +48,7 @@ def bot_attend(update: Update, context: CallbackContext) -> int:
             sub_idx += 1
         idx += 1
 
-    commands.append(["/{}".format(c.CANCEL)])
+    commands.append(["/{}".format(c.CMD_CANCEL)])
     update.message.reply_text(
         msg,
         reply_markup=ReplyKeyboardMarkup(commands, one_time_keyboard=True, resize_keyboard=True),
@@ -69,7 +69,7 @@ def bot_attend_save(update: Update, context: CallbackContext) -> int:
 
     user = update.message.from_user.name
     msg = update.message.text
-    msg = msg.strip("/{}_".format(c.TRAINING))
+    msg = msg.strip("/{}_".format(c.CMD_TRAINING))
 
     # Identify which training and subtraining the user chose, based on the indices of the command
     [t_idx, st_idx] = msg.split("_")

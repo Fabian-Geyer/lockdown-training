@@ -101,14 +101,6 @@ class Training:
         """
         return self.date.strftime(format_str)
 
-    def get_date_readable(self) -> str:
-        """
-        Get the training date in a human readable way.
-        The format is specified by self.date_format_str.
-        :return: String representing the training date
-        """
-        return self.get_date(self.date_format_str)
-
     def get_coach_full_name(self) -> str:
         """
         Get the full name of the coach as specified in the telegram settings.
@@ -169,9 +161,9 @@ class Training:
 
         events = []
         for idx, date in enumerate(readable_dates):
-            events.append("/{}_{}".format(c.EVENT, idx + 1))
+            events.append("/{}_{}".format(c.CMD_EVENT, idx + 1))
 
-        reply_keyboard = [events, ['/{}'.format(c.CANCEL)]]
+        reply_keyboard = [events, ['/{}'.format(c.CMD_CANCEL)]]
         msg = "Folgende Termine stehen zur Auswahl:\n"
         for idx, event in enumerate(events):
             msg += "{}: {}\n".format(event, readable_dates[idx])
@@ -193,9 +185,9 @@ class Training:
               'Titel: {}\n' \
               'Beschreibung: {}\n\n' \
               '/{}    /{}' \
-            .format(self.get_date_readable(), self.get_coach_full_name(), self.title, self.description, c.YES, c.CANCEL)
+            .format(util.get_readable_date_from_datetime(self.date), self.get_coach_full_name(), self.title, self.description, c.CMD_YES, c.CMD_CANCEL)
 
-        reply_keyboard = [['/{}'.format(c.YES), '/{}'.format(c.CANCEL)]]
+        reply_keyboard = [['/{}'.format(c.CMD_YES), '/{}'.format(c.CMD_CANCEL)]]
         update.message.reply_text(msg,
                                   reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True,
                                                                    resize_keyboard=True)
@@ -226,7 +218,7 @@ class Training:
         training = util.get_training(context)
         if util.parse_bot_date(update, training, c.TRAINING_DATE) == c.TRAINING_DATE:
             return c.TRAINING_DATE
-        reply_keyboard = [['/{}'.format(c.CANCEL)]]
+        reply_keyboard = [['/{}'.format(c.CMD_CANCEL)]]
 
         msg = "Okay, wie lautet der Titel von deinem Training (mind. {} Zeichen)?".format(c.MIN_CHARS_TITLE)
 
@@ -234,7 +226,7 @@ class Training:
             msg,
             reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True),
         )
-        logger.info("Date for the training: %s", training.get_date_readable())
+        logger.info("Date for the training: %s", util.get_readable_date_from_datetime(training.date))
         return c.TRAINING_TITLE
 
     @staticmethod
@@ -248,7 +240,7 @@ class Training:
         training = util.get_training(context)
         title = update.message.text.strip()
 
-        reply_keyboard = [['/{}'.format(c.SKIP), '/{}'.format(c.CANCEL)]]
+        reply_keyboard = [['/{}'.format(c.CMD_SKIP), '/{}'.format(c.CMD_CANCEL)]]
 
         if len(title) < c.MIN_CHARS_TITLE:
             msg = "Der eingegebene Titel ist kürzer als {} Zeichen.\n" \
@@ -264,7 +256,7 @@ class Training:
               '- Benötigte Utensilien\n' \
               '- Spezielle Playlist\n' \
               '- ...\n\n' \
-              'Falls du keine Beschreibung benötigst, kannst du diesen Schritt mit /{} überspringen.'.format(c.SKIP)
+              'Falls du keine Beschreibung benötigst, kannst du diesen Schritt mit /{} überspringen.'.format(c.CMD_SKIP)
         update.message.reply_text(msg,
                                   reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True,
                                                                    resize_keyboard=True),
@@ -310,7 +302,7 @@ class Training:
         :return: START when agreed, TRAINING_CHECK else
         """
         training = util.get_training(context)
-        if update.message.text == "/{}".format(c.YES):
+        if update.message.text == "/{}".format(c.CMD_YES):
             msg = "Trainingsdaten werden übermittelt. Herzlichen Glückwunsch zum Training!"
             update.message.reply_text(msg)
             db = context.user_data["db"]

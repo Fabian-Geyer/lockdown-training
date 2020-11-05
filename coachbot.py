@@ -14,8 +14,10 @@ from telegram.ext import (
 )
 
 import attend_training
+import cancel_training
 import constants as c
 import util
+import info
 from Database import Database
 from Training import Training
 
@@ -64,13 +66,23 @@ def cancel(update: Update, context: CallbackContext) -> int:
 
 
 def select_action(update: Update, context: CallbackContext) -> int:
+    """
+    Selector for the main menu
+    :param update: Chat bot update object
+    :param context: Chat bot context
+    :return: The specific values for the next state of each menu operation
+    """
     util.reset_data(context)
     usr_input = update.message.text
 
-    if usr_input == c.OFFER_TRAINING:
+    if usr_input == c.CMD_OFFER_TRAINING:
         return Training.bot_add(update, context)
-    elif usr_input == c.ATTEND_TRAINING:
+    elif usr_input == c.CMD_ATTEND_TRAINING:
         return attend_training.bot_attend(update, context)
+    elif usr_input == c.CMD_INFO:
+        return info.print_info(update, context)
+    elif usr_input == c.CMD_CANCEL_TRAINING:
+        return cancel_training.cancel_own_or_attendee(update, context)
     else:
         return c.START
 
@@ -97,22 +109,30 @@ def main(config_file: str) -> bool:
     # Get the dispatcher to register handlers
     dispatcher = updater.dispatcher
 
+    # Regex for the main menu
+    menu_regex = '^({})$'.format('|'.join([m for menu in c.MENU for m in menu]))
+
     # Add conversation handler with the states ....
-    # TODO: Newlines in description and title are currently not possible
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler(c.START, start)],
+        entry_points=[CommandHandler(c.CMD_START, start)],
         states={
-            c.START: [MessageHandler(Filters.regex('^({}|{})$'.format(c.OFFER_TRAINING, c.ATTEND_TRAINING)),
+            c.START: [MessageHandler(Filters.regex(menu_regex),
                                      select_action)],
-            c.TRAINING_DATE: [MessageHandler(Filters.regex('^/{}_[0-9]+$'.format(c.EVENT)), Training.bot_set_date)],
-            c.TRAINING_TITLE: [MessageHandler(Filters.regex('^(?!/{})[\\S\\s]*$'.format(c.CANCEL)),
+            c.TRAINING_DATE: [MessageHandler(Filters.regex('^/{}_[0-9]+$'.format(c.CMD_EVENT)), Training.bot_set_date)],
+            c.TRAINING_TITLE: [MessageHandler(Filters.regex('^(?!/{})[\\S\\s]*$'.format(c.CMD_CANCEL)),
                                               Training.bot_set_title)],
-            c.TRAINING_DESCRIPTION: [MessageHandler(Filters.regex('^(?!(/{}|/{}))[\\S\\s]*$'.format(c.CANCEL, c.SKIP)),
+            c.TRAINING_DESCRIPTION: [MessageHandler(Filters.regex('^(?!(/{}|/{}))[\\S\\s]*$'.format(c.CMD_CANCEL, c.CMD_SKIP)),
                                                     Training.bot_set_description),
-                                     CommandHandler(c.SKIP, Training.bot_skip_description)],
-            c.TRAINING_CHECK: [MessageHandler(Filters.regex('^(?!(/{})).*$'.format(c.CANCEL)), Training.bot_check)],
-            c.TRAINING_ADD: [MessageHandler(Filters.regex('^/{}_[0-9]+_[0-9]+$'.format(c.TRAINING)),
-                                            attend_training.bot_attend_save)]
+                                     CommandHandler(c.CMD_SKIP, Training.bot_skip_description)],
+            c.TRAINING_CHECK: [MessageHandler(Filters.regex('^(?!(/{})).*$'.format(c.CMD_CANCEL)), Training.bot_check)],
+            c.TRAINING_ADD: [MessageHandler(Filters.regex('^/{}_[0-9]+_[0-9]+$'.format(c.CMD_TRAINING)),
+                                            attend_training.bot_attend_save)],
+            c.CANCEL_TRAINING: [MessageHandler(Filters.regex('^/({}|{})$'.format(c.CMD_COACH, c.CMD_ATTENDEE)),
+                                               cancel_training.cancel_training)],
+            c.CANCEL_TRAINING_ATTENDEE: [MessageHandler(Filters.regex('^/{}_[0-9]+$'.format(c.CMD_TRAINING)),
+                                                        cancel_training.cancel_training_attendee)],
+            c.CANCEL_TRAINING_COACH: [MessageHandler(Filters.regex('^/{}_[0-9]+$'.format(c.CMD_TRAINING)),
+                                                     cancel_training.cancel_training_coach)],
         },
         fallbacks=[MessageHandler(Filters.command, cancel)],
     )
