@@ -39,7 +39,6 @@ class Database:
         import constants as c
         db = Database(c.CONFIG_FILE)
         db.delete_all_trainings()
-        db.create_trainings(14)
 
     def add_training(self, training_date, time):
         """add one training to the database with a unix timestamp
@@ -134,7 +133,9 @@ class Database:
         trainings = self.trainings.find()
         trainings_list = []
         for training in trainings:
-            trainings_list.append(training)
+            if self.is_in_future(training["date"]):
+                training["date"] = datetime.datetime.fromtimestamp(training["date"])
+                trainings_list.append(training)
         return trainings_list
 
     def get_my_trainings(self, user: str, role: int) -> list:
@@ -154,7 +155,8 @@ class Database:
             for subtraining in training["subtrainings"]:
                 if (user == subtraining["coach_user"] and role == c.COACH)\
                         or user in subtraining["attendees"] and role == c.ATTENDEE:
-                    my_trainings.append(subtraining)
+                    if self.is_in_future(subtraining["date"]):
+                        my_trainings.append(subtraining)
         return my_trainings
 
     def get_subtrainings(self, user: str) -> list:
@@ -226,13 +228,27 @@ class Database:
         trainings_list = self.trainings.find().sort("date")
         trainings = []
         for tr in trainings_list:
-            tr["date"] = datetime.datetime.fromtimestamp(tr["date"])
-            now = datetime.datetime.now()
-            if now < tr["date"]:
+            if self.is_in_future(tr["date"]):
+                tr["date"] = datetime.datetime.fromtimestamp(tr["date"])
                 trainings.append(tr)
         if len(trainings) >= number_of_trainings:
             trainings = trainings[0:number_of_trainings]
             return trainings
+
+    def is_in_future(self, unix_timestamp: int) -> bool:
+        """Check if given date is in the future or not
+
+        :param unix_timestamp: unix timestamp
+        :type unix_timestamp: int
+        :return: wether the date is in the futere
+        :rtype: bool
+        """
+        now = datetime.datetime.now()
+        date = datetime.datetime.fromtimestamp(unix_timestamp)
+        if now < date:
+            return True
+        return False
+
 
     def delete_all_trainings(self):
         """delete all training database entries
