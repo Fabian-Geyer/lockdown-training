@@ -193,6 +193,27 @@ class Database:
         self.trainings.replace_one({ "date": date }, training )
         return "user was removed"
 
+    def remove_training_of_coach(self, coach_user: str, date: int) -> dict:
+        """remove training by coach username and date. Return data of 
+        the deleted training
+
+        :param coach_user: username coach
+        :type coach_user: str
+        :param date: date as int unix timestamp
+        :type date: int
+        :return: dict with data of the deleted training 
+        :rtype: dict
+        """
+        training = self.trainings.find_one({ "date": date })
+        for subtraining in training["substrainings"]:
+            if coach_user == subtraining["coach_user"]:
+                removed_subtraining = subtraining
+                # remove subtraining
+                training["subtrainings"].remove(subtraining)
+                # write to database
+                self.trainings.replace_one({ "date": date }, training )
+                return removed_subtraining
+
     def create_trainings(self, number_of_days: int):
         """Read training weekdays and time from the config file and 
         Create all trainings accordingly for the time period of the 
