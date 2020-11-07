@@ -205,7 +205,7 @@ class Database:
         :rtype: dict
         """
         training = self.trainings.find_one({ "date": date })
-        for subtraining in training["substrainings"]:
+        for subtraining in training["subtrainings"]:
             if coach_user == subtraining["coach_user"]:
                 removed_subtraining = subtraining
                 # remove subtraining

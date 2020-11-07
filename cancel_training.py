@@ -133,7 +133,33 @@ def cancel_training_coach(update: Update, context: CallbackContext) -> int:
     :param context: Chat bot context
     :return: START
     """
-    msg = "*Das geht noch nicht*"
+    user = update.message.from_user
+    # Get database data
+    db = util.get_db(context)
+
+    training_idx = int(update.message.text.strip("/{}_".format(c.CMD_TRAINING))) - 1
+    my_trainings = db.get_my_trainings(user.name, c.COACH)
+
+    if training_idx >= len(my_trainings):
+        msg = "*Du kannst maximal /{}\_{} auswählen*\n\n".format(c.CMD_TRAINING, len(my_trainings))
+        update.message.reply_text(
+            msg,
+            parse_mode=ParseMode.MARKDOWN,
+        )
+        msg_trainings, commands = util.get_training_list(my_trainings, with_commands=True)
+        msg += msg_trainings
+        commands.append(["/{}".format(c.CMD_CANCEL)])
+        update.message.reply_text(
+            msg,
+            reply_markup=ReplyKeyboardMarkup(commands, one_time_keyboard=True, resize_keyboard=True),
+            parse_mode=ParseMode.MARKDOWN,
+        )
+        return c.CANCEL_TRAINING_ATTENDEE
+
+    cancelled_training = my_trainings[training_idx]
+    db.remove_training_of_coach(user.name, cancelled_training["date"])
+
+    msg = "Du hast da Training am {} abgesagt".format(util.get_readable_date_from_int(int(cancelled_training["date"])))
 
     update.message.reply_text(
         msg,
@@ -142,4 +168,5 @@ def cancel_training_coach(update: Update, context: CallbackContext) -> int:
     # Start again
     util.action_selector(update)
     return c.START
+
 
