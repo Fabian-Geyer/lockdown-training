@@ -33,7 +33,7 @@ def cancel_own_or_attendee(update: Update, context: CallbackContext) -> int:
     return c.CANCEL_TRAINING
 
 
-def cancel_training(update: Update, context: CallbackContext) -> int:
+def cancel_training_selector(update: Update, context: CallbackContext) -> int:
     """
     Cancel a training depending on the selected role of the user
     :param update: Chat bot update object
@@ -57,11 +57,12 @@ def cancel_training(update: Update, context: CallbackContext) -> int:
     msg = ""
     if len(my_trainings) > 0:
         msg_trainings, commands = util.get_training_list(my_trainings, with_commands=True)
+        msg_trainings = msg_trainings.replace("_", "\_")
         msg += msg_trainings
     commands.append(["/{}".format(c.CMD_CANCEL)])
 
     if msg == "":
-        msg = "Du kannst erst absagen, wenn du überhaupt erst zugesagt oder ein Training erstellt hast \U0001F605"
+        msg = "Du kannst erst absagen, wenn du überhaupt erst zugesagt, oder ein Training erstellt hast \U0001F605"
         update.message.reply_text(
             msg,
             parse_mode=ParseMode.MARKDOWN,
@@ -82,6 +83,39 @@ def cancel_training(update: Update, context: CallbackContext) -> int:
         return c.CANCEL_TRAINING_COACH
 
 
+def cancel_training(update: Update, context: CallbackContext, role: int):
+    """
+    Get the training to cancel
+    :param update: Chat bot update object
+    :param context: Chat bot context
+    :param role: Role of the user (COACH or ATTENDEE)
+    :return: Tuple of training and true or false
+    """
+    user = update.message.from_user
+    # Get database data
+    db = util.get_db(context)
+
+    training_idx = int(update.message.text.strip("/{}_".format(c.CMD_TRAINING))) - 1
+    my_trainings = db.get_my_trainings(user.name, role)
+
+    if training_idx >= len(my_trainings):
+        msg = "*Du kannst maximal /{}_{} auswählen*\n\n".format(c.CMD_TRAINING, len(my_trainings))
+
+        msg_trainings, commands = util.get_training_list(my_trainings, with_commands=True)
+        msg_trainings = msg_trainings.replace("_", "\_")
+        msg += msg_trainings
+        commands.append(["/{}".format(c.CMD_CANCEL)])
+        update.message.reply_text(
+            msg,
+            reply_markup=ReplyKeyboardMarkup(commands, one_time_keyboard=True, resize_keyboard=True),
+            parse_mode=ParseMode.MARKDOWN,
+        )
+        return None, False
+
+    cancelled_training = my_trainings[training_idx]
+    return cancelled_training, True
+
+
 def cancel_training_attendee(update: Update, context: CallbackContext) -> int:
     """
     Remove the user from an attendees list of a subtraining
@@ -93,28 +127,11 @@ def cancel_training_attendee(update: Update, context: CallbackContext) -> int:
     # Get database data
     db = util.get_db(context)
 
-    training_idx = int(update.message.text.strip("/{}_".format(c.CMD_TRAINING))) - 1
-    my_trainings = db.get_my_trainings(user.name, c.ATTENDEE)
-
-    if training_idx >= len(my_trainings):
-        msg = "*Du kannst maximal /{}\_{} auswählen*\n\n".format(c.CMD_TRAINING, len(my_trainings))
-        update.message.reply_text(
-            msg,
-            parse_mode=ParseMode.MARKDOWN,
-        )
-        msg_trainings, commands = util.get_training_list(my_trainings, with_commands=True)
-        msg += msg_trainings
-        commands.append(["/{}".format(c.CMD_CANCEL)])
-        update.message.reply_text(
-            msg,
-            reply_markup=ReplyKeyboardMarkup(commands, one_time_keyboard=True, resize_keyboard=True),
-            parse_mode=ParseMode.MARKDOWN,
-        )
+    cancelled_training, ret = cancel_training(update, context, c.ATTENDEE)
+    if not ret:
         return c.CANCEL_TRAINING_ATTENDEE
 
-    cancelled_training = my_trainings[training_idx]
     db.cancel_subtrainings(cancelled_training["date"], user.name)
-
     msg = "Du wurdest erfolgreich aus der Teilnehmerliste entfernt"
 
     update.message.reply_text(
@@ -137,29 +154,12 @@ def cancel_training_coach(update: Update, context: CallbackContext) -> int:
     # Get database data
     db = util.get_db(context)
 
-    training_idx = int(update.message.text.strip("/{}_".format(c.CMD_TRAINING))) - 1
-    my_trainings = db.get_my_trainings(user.name, c.COACH)
+    cancelled_training, ret = cancel_training(update, context, c.COACH)
+    if not ret:
+        return c.CANCEL_TRAINING_COACH
 
-    if training_idx >= len(my_trainings):
-        msg = "*Du kannst maximal /{}\_{} auswählen*\n\n".format(c.CMD_TRAINING, len(my_trainings))
-        update.message.reply_text(
-            msg,
-            parse_mode=ParseMode.MARKDOWN,
-        )
-        msg_trainings, commands = util.get_training_list(my_trainings, with_commands=True)
-        msg += msg_trainings
-        commands.append(["/{}".format(c.CMD_CANCEL)])
-        update.message.reply_text(
-            msg,
-            reply_markup=ReplyKeyboardMarkup(commands, one_time_keyboard=True, resize_keyboard=True),
-            parse_mode=ParseMode.MARKDOWN,
-        )
-        return c.CANCEL_TRAINING_ATTENDEE
-
-    cancelled_training = my_trainings[training_idx]
     db.remove_training_of_coach(user.name, cancelled_training["date"])
-
-    msg = "Du hast da Training am {} abgesagt".format(util.get_readable_date_from_int(int(cancelled_training["date"])))
+    msg = "Du hast das Training am {} abgesagt".format(util.get_readable_date_from_int(int(cancelled_training["date"])))
 
     update.message.reply_text(
         msg,
@@ -168,5 +168,3 @@ def cancel_training_coach(update: Update, context: CallbackContext) -> int:
     # Start again
     util.action_selector(update)
     return c.START
-
-

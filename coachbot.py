@@ -128,7 +128,7 @@ def main(config_file: str) -> bool:
             c.TRAINING_ADD: [MessageHandler(Filters.regex('^/{}_[0-9]+_[0-9]+$'.format(c.CMD_TRAINING)),
                                             attend_training.bot_attend_save)],
             c.CANCEL_TRAINING: [MessageHandler(Filters.regex('^/({}|{})$'.format(c.CMD_COACH, c.CMD_ATTENDEE)),
-                                               cancel_training.cancel_training)],
+                                               cancel_training.cancel_training_selector)],
             c.CANCEL_TRAINING_ATTENDEE: [MessageHandler(Filters.regex('^/{}_[0-9]+$'.format(c.CMD_TRAINING)),
                                                         cancel_training.cancel_training_attendee)],
             c.CANCEL_TRAINING_COACH: [MessageHandler(Filters.regex('^/{}_[0-9]+$'.format(c.CMD_TRAINING)),

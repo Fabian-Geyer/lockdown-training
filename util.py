@@ -99,8 +99,8 @@ def get_training_list(trainings: list, with_commands=False) -> [str, list]:
     for idx, t in enumerate(trainings):
         msg += "*{}. Training am {}*\n".format(idx + 1, get_readable_date_from_int(t["date"]))
         if with_commands:
-            command = "/{}\_{}: ".format(c.CMD_TRAINING, idx + 1)
-            msg += command
+            command = "/{}_{}".format(c.CMD_TRAINING, idx + 1)
+            msg += command + ": "
             commands.append([command])
         else:
             msg += "Titel: "
