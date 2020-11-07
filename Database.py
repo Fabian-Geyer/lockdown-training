@@ -4,8 +4,9 @@ import os
 
 import pymongo
 
-from Training import Training
 import constants as c
+import util
+from Training import Training
 
 
 class Database:
@@ -33,13 +34,6 @@ class Database:
         self.trainings = self.database["trainings"]
         return True
 
-    def reset_all(self):
-        """Reset the database and rebuild the trainings
-        """
-        import constants as c
-        db = Database(c.CONFIG_FILE)
-        db.delete_all_trainings()
-
     def add_training(self, training_date, time):
         """add one training to the database with a unix timestamp
 
@@ -66,10 +60,10 @@ class Database:
         }
         self.trainings.insert_one(training)
 
-    def subtraining_add_attendee(self, user:str, date: int, coach_user: str):
+    def subtraining_add_attendee(self, user: str, date: int, coach_user: str):
         """add an attendee to a subtraining"""
         # find the correct training by date
-        training = self.trainings.find_one({ "date": date })
+        training = self.trainings.find_one({"date": date})
         # delete user from all subtrainings
         for subtraining in training["subtrainings"]:
             if user in subtraining["attendees"]:
@@ -79,17 +73,17 @@ class Database:
                 subtraining["attendees"].append(user)
                 break
         # overwrite the old object
-        self.trainings.replace_one({ "date": date }, training )
+        self.trainings.replace_one({"date": date}, training)
         return "user removed from all other trainings and added to desired subtraining"
 
     def training_add_attendee(self, user: str, date: int):
         """add an attendee to a training"""
         # check if user already is an attendee
-        training = self.trainings.find_one({ "date": date })
+        training = self.trainings.find_one({"date": date})
         if user in training["attendees"]:
             return "user already is attendee"
         # add the user to the training
-        self.trainings.update({ "date": date }, { "$push": { "attendees": user }})
+        self.trainings.update({"date": date}, {"$push": {"attendees": user}})
         return "user was added"
 
     def add_subtraining(self, training: Training):
@@ -111,15 +105,15 @@ class Database:
             "attendees": []
         }
         # check if user already has a training on that day
-        main_training = self.trainings.find_one({ "date": training_data["date"] })
+        main_training = self.trainings.find_one({"date": training_data["date"]})
         for subtraining in main_training["subtrainings"]:
             if training_data["coach_user"] == subtraining["coach_user"]:
                 return False
-        
+
         # add the subtraining to the main training
         self.trainings.update(
-            { "date": training_data["date"] },
-            { "$push": { "subtrainings": training_data }}
+            {"date": training_data["date"]},
+            {"$push": {"subtrainings": training_data}}
         )
         return True
 
@@ -133,7 +127,7 @@ class Database:
         trainings = self.trainings.find()
         trainings_list = []
         for training in trainings:
-            if self.is_in_future(training["date"]):
+            if util.is_in_future(training["date"]):
                 training["date"] = datetime.datetime.fromtimestamp(training["date"])
                 trainings_list.append(training)
         return trainings_list
@@ -153,9 +147,9 @@ class Database:
         my_trainings = []
         for training in trainings:
             for subtraining in training["subtrainings"]:
-                if (user == subtraining["coach_user"] and role == c.COACH)\
+                if (user == subtraining["coach_user"] and role == c.COACH) \
                         or user in subtraining["attendees"] and role == c.ATTENDEE:
-                    if self.is_in_future(subtraining["date"]):
+                    if util.is_in_future(subtraining["date"]):
                         my_trainings.append(subtraining)
         return my_trainings
 
@@ -185,12 +179,12 @@ class Database:
         :return: return success message
         :rtype: str
         """
-        training = self.trainings.find_one({ "date": date })
+        training = self.trainings.find_one({"date": date})
         for subtraining in training["subtrainings"]:
             if user in subtraining["attendees"]:
                 subtraining["attendees"].remove(user)
         # replace the old database entry
-        self.trainings.replace_one({ "date": date }, training )
+        self.trainings.replace_one({"date": date}, training)
         return "user was removed"
 
     def remove_training_of_coach(self, coach_user: str, date: int) -> dict:
@@ -204,14 +198,14 @@ class Database:
         :return: dict with data of the deleted training 
         :rtype: dict
         """
-        training = self.trainings.find_one({ "date": date })
+        training = self.trainings.find_one({"date": date})
         for subtraining in training["subtrainings"]:
             if coach_user == subtraining["coach_user"]:
                 removed_subtraining = subtraining
                 # remove subtraining
                 training["subtrainings"].remove(subtraining)
                 # write to database
-                self.trainings.replace_one({ "date": date }, training )
+                self.trainings.replace_one({"date": date}, training)
                 return removed_subtraining
 
     def create_trainings(self, number_of_days: int):
@@ -249,27 +243,12 @@ class Database:
         trainings_list = self.trainings.find().sort("date")
         trainings = []
         for tr in trainings_list:
-            if self.is_in_future(tr["date"]):
+            if util.is_in_future(tr["date"]):
                 tr["date"] = datetime.datetime.fromtimestamp(tr["date"])
                 trainings.append(tr)
         if len(trainings) >= number_of_trainings:
             trainings = trainings[0:number_of_trainings]
             return trainings
-
-    def is_in_future(self, unix_timestamp: int) -> bool:
-        """Check if given date is in the future or not
-
-        :param unix_timestamp: unix timestamp
-        :type unix_timestamp: int
-        :return: wether the date is in the futere
-        :rtype: bool
-        """
-        now = datetime.datetime.now()
-        date = datetime.datetime.fromtimestamp(unix_timestamp)
-        if now < date:
-            return True
-        return False
-
 
     def delete_all_trainings(self):
         """delete all training database entries

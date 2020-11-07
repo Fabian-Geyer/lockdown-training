@@ -35,7 +35,6 @@ MENU = [
     [CMD_ATTEND_TRAINING, CMD_INFO],
 ]
 
-
 DATE_FORMAT = "%a, %d.%m.%y um %H:%M"
 
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

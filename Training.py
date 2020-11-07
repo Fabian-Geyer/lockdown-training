@@ -185,7 +185,8 @@ class Training:
               'Titel: {}\n' \
               'Beschreibung: {}\n\n' \
               '/{}    /{}' \
-            .format(util.get_readable_date_from_datetime(self.date), self.get_coach_full_name(), self.title, self.description, c.CMD_YES, c.CMD_CANCEL)
+            .format(util.get_readable_date_from_datetime(self.date), self.get_coach_full_name(), self.title,
+                    self.description, c.CMD_YES, c.CMD_CANCEL)
 
         reply_keyboard = [['/{}'.format(c.CMD_YES), '/{}'.format(c.CMD_CANCEL)]]
         update.message.reply_text(msg,

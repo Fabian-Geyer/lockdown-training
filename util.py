@@ -1,8 +1,11 @@
+import datetime
+
 from telegram import ReplyKeyboardMarkup, Update
 from telegram.ext import CallbackContext
-import constants as c
-import datetime
+
 import Training
+import constants as c
+from Database import Database
 
 
 def action_selector(update: Update):
@@ -109,3 +112,25 @@ def get_training_list(trainings: list, with_commands=False) -> [str, list]:
         return msg, commands
     else:
         return msg, commands
+
+
+def reset_all():
+    """Reset the database and rebuild the trainings
+    """
+    db = Database(c.CONFIG_FILE)
+    db.delete_all_trainings()
+
+
+def is_in_future(unix_timestamp: int) -> bool:
+    """Check if given date is in the future or not
+
+    :param unix_timestamp: unix timestamp
+    :type unix_timestamp: int
+    :return: wether the date is in the futere
+    :rtype: bool
+    """
+    now = datetime.datetime.now()
+    date = datetime.datetime.fromtimestamp(unix_timestamp)
+    if now < date:
+        return True
+    return False

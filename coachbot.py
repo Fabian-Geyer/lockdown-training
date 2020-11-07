@@ -16,8 +16,8 @@ from telegram.ext import (
 import attend_training
 import cancel_training
 import constants as c
-import util
 import info
+import util
 from Database import Database
 from Training import Training
 
@@ -121,7 +121,8 @@ def main(config_file: str) -> bool:
             c.TRAINING_DATE: [MessageHandler(Filters.regex('^/{}_[0-9]+$'.format(c.CMD_EVENT)), Training.bot_set_date)],
             c.TRAINING_TITLE: [MessageHandler(Filters.regex('^(?!/{})[\\S\\s]*$'.format(c.CMD_CANCEL)),
                                               Training.bot_set_title)],
-            c.TRAINING_DESCRIPTION: [MessageHandler(Filters.regex('^(?!(/{}|/{}))[\\S\\s]*$'.format(c.CMD_CANCEL, c.CMD_SKIP)),
+            c.TRAINING_DESCRIPTION: [MessageHandler(Filters.regex('^(?!(/{}|/{}))[\\S\\s]*$'.format(c.CMD_CANCEL,
+                                                                                                    c.CMD_SKIP)),
                                                     Training.bot_set_description),
                                      CommandHandler(c.CMD_SKIP, Training.bot_skip_description)],
             c.TRAINING_CHECK: [MessageHandler(Filters.regex('^(?!(/{})).*$'.format(c.CMD_CANCEL)), Training.bot_check)],
