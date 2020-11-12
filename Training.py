@@ -1,11 +1,12 @@
 import datetime
 import logging
 
-from telegram import ReplyKeyboardMarkup, Update, User
+from telegram import ReplyKeyboardMarkup, Update, ParseMode
 from telegram.ext import CallbackContext
 
 import constants as c
 import util
+from User import User
 
 logging.basicConfig(
     format=c.LOG_FORMAT, level=logging.INFO
@@ -14,25 +15,38 @@ logger = logging.getLogger(__name__)
 
 
 class Training:
-    def __init__(self, coach=None, date=None, title="", description="", possible_dates=None,
-                 date_idx=-1, date_format_str=c.DATE_FORMAT):
+    def __init__(self, coach=None, date=None, title="", description="", attendees=None, from_dict=None):
         """
         Initialization of the training object.
         :param coach: Telegram User object
         :param date: Training date as datetime
         :param title: Training title as string
         :param description: Training description as string
-        :param possible_dates: List of possible dates for this training as list of datetime objects
-        :param date_idx: Index which date of possible_dates the user chose
-        :param date_format_str: Format specifier for human readable dates
         """
-        self.coach = coach
-        self.date = date
-        self.title = title
-        self.description = description
-        self.possible_dates = possible_dates
-        self.date_idx = date_idx
-        self.date_format_str = date_format_str
+        self.attendees = attendees if attendees else []
+        if from_dict is None:
+            self.coach = coach
+            self.date = date
+            self.title = title
+            self.description = description
+            self.attendees = attendees if attendees else []
+        else:
+            self.coach = User(from_dict=from_dict["coach"])
+            self.date = datetime.datetime.fromtimestamp(from_dict["date"])
+            self.title = from_dict["title"]
+            self.description = from_dict["description"]
+            for a in from_dict["attendees"]:
+                self.attendees.append(User(from_dict=a))
+        self.possible_dates = []
+
+    def get_dict(self):
+        att = []
+        return {"date": int(self.get_date("%s")),
+                "coach": self.coach.get_dict(),
+                "title": self.title,
+                "description": self.description,
+                "attendees": [att.append(a.get_dict()) for a in self.get_attendees()],
+                "time": self.get_date("%H:%M")}
 
     def set_coach(self, coach: User):
         """
@@ -48,13 +62,6 @@ class Training:
         """
         self.date = date
 
-    def set_date_from_idx(self, idx: int):
-        """
-        Choose the date of the training by the index of the list of possible trainings.
-        :param idx: List index for the list of possible trainings
-        """
-        self.set_date(self.possible_dates[idx])
-
     def set_title(self, title: str):
         """
         Set the title of the training.
@@ -69,29 +76,19 @@ class Training:
         """
         self.description = description
 
-    def set_possible_dates(self, possible_dates: list):
+    def get_attendees(self) -> list:
         """
-        Set the list of all possible dates for this training.
-        The user can later choose the date.
-        :param possible_dates: List of datetime dates
+        Get a list of all attendees
+        :return: List of attendees as list of User objects
         """
-        self.possible_dates = possible_dates
+        return self.attendees
 
-    def set_date_idx(self, date_idx: int):
+    def get_possible_dates(self) -> list:
         """
-        Set the index which of the possible dates the user chose.
-        :param date_idx: List index
+        Get a list of dates of the possible list of training dates.
+        :return: List of strings with dates
         """
-        self.date_idx = date_idx
-
-    def get_possible_dates_readable(self) -> list:
-        """
-        Get a list of human readable dates of the possible list of dates.
-        :return: List of strings with human readable dates
-        """
-        dates_str = []
-        [dates_str.append(date.strftime(self.date_format_str)) for date in self.possible_dates]
-        return dates_str
+        return self.possible_dates
 
     def get_date(self, format_str="%s") -> str:
         """
@@ -100,20 +97,6 @@ class Training:
         :return: String representing the training date
         """
         return self.date.strftime(format_str)
-
-    def get_coach_full_name(self) -> str:
-        """
-        Get the full name of the coach as specified in the telegram settings.
-        :return: Full name of the coach
-        """
-        return self.coach.full_name
-
-    def get_coach_user_name(self) -> str:
-        """
-        Get the telegram username of the coach.
-        :return: Username of the coach
-        """
-        return self.coach.name
 
     def get_coach(self) -> User:
         """
@@ -151,20 +134,28 @@ class Training:
         :param context: Chat bot context
         """
         db = context.user_data["db"]
-        next_trainings = db.next_trainings(c.FUTURE_TRAININGS)
+        user = User(update.message.chat_id, update.message.from_user)
+        next_trainings_all = db.next_trainings(c.FUTURE_TRAININGS)
+        next_trainings = []
+        for t in next_trainings_all:
+            coaches = []
+            [coaches.append(User(from_dict=s["coach"])) for s in t["subtrainings"]]
+            if user not in coaches:
+                next_trainings.append(t)
 
         next_trainings_dates = []
         [next_trainings_dates.append(t["date"]) for t in next_trainings]
+        self.possible_dates = next_trainings_dates
 
-        self.set_possible_dates(next_trainings_dates)
-        readable_dates = self.get_possible_dates_readable()
+        readable_dates = []
+        [readable_dates.append(date.strftime(c.DATE_FORMAT)) for date in next_trainings_dates]
 
         events = []
         for idx, date in enumerate(readable_dates):
-            events.append("/{}_{}".format(c.CMD_EVENT, idx + 1))
+            events.append("/{}\_{}".format(c.CMD_EVENT, idx + 1))
 
-        reply_keyboard = [events, ['/{}'.format(c.CMD_CANCEL)]]
-        msg = "Folgende Termine stehen zur Auswahl:\n"
+        reply_keyboard = [[e.replace("\\", "") for e in events], ['/{}'.format(c.CMD_CANCEL)]]
+        msg = "Folgende Termine stehen zur Auswahl (pro Termin kannst du nur *ein* Training anbieten):\n"
         for idx, event in enumerate(events):
             msg += "{}: {}\n".format(event, readable_dates[idx])
 
@@ -172,6 +163,7 @@ class Training:
         update.message.reply_text(
             msg,
             reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True),
+            parse_mode=ParseMode.MARKDOWN,
         )
 
     def check(self, update: Update):
@@ -185,7 +177,7 @@ class Training:
               'Titel: {}\n' \
               'Beschreibung: {}\n\n' \
               '/{}    /{}' \
-            .format(util.get_readable_date_from_datetime(self.date), self.get_coach_full_name(), self.title,
+            .format(util.get_readable_date_from_datetime(self.date), self.get_coach().get_full_name(), self.title,
                     self.description, c.CMD_YES, c.CMD_CANCEL)
 
         reply_keyboard = [['/{}'.format(c.CMD_YES), '/{}'.format(c.CMD_CANCEL)]]
@@ -204,7 +196,7 @@ class Training:
         """
         logger.info("User %s wants to offer a training", update.message.from_user.full_name)
         training = util.get_training(context)
-        training.set_coach(update.message.from_user)
+        training.set_coach(User(update.message.chat_id, update.message.from_user))
         training.date_selector(update, context)
         return c.TRAINING_DATE
 

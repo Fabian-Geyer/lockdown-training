@@ -5,7 +5,6 @@ from telegram.ext import CallbackContext
 
 import Training
 import constants as c
-from Database import Database
 
 
 def action_selector(update: Update):
@@ -62,13 +61,12 @@ def parse_bot_date(update: Update, training: Training, curr_state: int) -> int:
     """
     selected_date = update.message.text.strip("/{}_".format(c.CMD_EVENT))
 
-    if not selected_date.isnumeric() or int(selected_date) > len(training.possible_dates):
+    if not selected_date.isnumeric() or int(selected_date) > len(training.get_possible_dates()):
         training.date_selector(update)
         return curr_state
 
     date_idx = int(selected_date) - 1
-    training.set_date_idx(date_idx)
-    training.set_date_from_idx(training.date_idx)
+    training.set_date(training.get_possible_dates()[date_idx])
 
 
 def get_readable_date_from_datetime(date: datetime) -> str:
@@ -78,15 +76,6 @@ def get_readable_date_from_datetime(date: datetime) -> str:
     :return: Readable date string
     """
     return date.strftime(c.DATE_FORMAT)
-
-
-def get_readable_date_from_int(date: int) -> str:
-    """
-    Print a datetime object to a readable format
-    :param date: Int containing the date in epoch seconds
-    :return: Readable date string
-    """
-    return get_readable_date_from_datetime(datetime.datetime.fromtimestamp(date))
 
 
 def get_training_list(trainings: list, with_commands=False) -> [str, list]:
@@ -100,25 +89,18 @@ def get_training_list(trainings: list, with_commands=False) -> [str, list]:
     msg = ""
     commands = []
     for idx, t in enumerate(trainings):
-        msg += "*{}. Training am {}*\n".format(idx + 1, get_readable_date_from_int(t["date"]))
+        msg += "*{}. Training am {}*\n".format(idx + 1, t.get_date(c.DATE_FORMAT))
         if with_commands:
             command = "/{}_{}".format(c.CMD_TRAINING, idx + 1)
             msg += command + ": "
             commands.append([command])
         else:
             msg += "Titel: "
-        msg += "{}\n\n".format(t["title"].replace("\n", " "))
+        msg += "{}\n\n".format(t.get_title().replace("\n", " "))
     if with_commands:
         return msg, commands
     else:
         return msg, commands
-
-
-def reset_all():
-    """Reset the database and rebuild the trainings
-    """
-    db = Database(c.CONFIG_FILE)
-    db.delete_all_trainings()
 
 
 def is_in_future(unix_timestamp: int) -> bool:

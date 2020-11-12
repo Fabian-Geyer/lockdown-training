@@ -5,6 +5,8 @@ from telegram.ext import CallbackContext
 
 import constants as c
 import util
+from User import User
+from Notifier import Notifier
 
 logging.basicConfig(
     format=c.LOG_FORMAT, level=logging.INFO
@@ -40,7 +42,8 @@ def cancel_training_selector(update: Update, context: CallbackContext) -> int:
     :param context: Chat bot context
     :return: CANCEL_TRAINING_ATTENDEE or CANCEL_TRAINING_COACH
     """
-    user = update.message.from_user
+    tg_user = update.message.from_user
+    user = User(update.message.chat_id, tg_user)
     # Get database data
     db = util.get_db(context)
     commands = []
@@ -53,7 +56,7 @@ def cancel_training_selector(update: Update, context: CallbackContext) -> int:
     else:
         return cancel_own_or_attendee(update, context)
 
-    my_trainings = db.get_my_trainings(user.name, role)
+    my_trainings = db.get_my_trainings(user, role)
     msg = ""
     if len(my_trainings) > 0:
         msg_trainings, commands = util.get_training_list(my_trainings, with_commands=True)
@@ -91,12 +94,13 @@ def cancel_training(update: Update, context: CallbackContext, role: int):
     :param role: Role of the user (COACH or ATTENDEE)
     :return: Tuple of training and true or false
     """
-    user = update.message.from_user
+    tg_user = update.message.from_user
+    user = User(update.message.chat_id, tg_user)
     # Get database data
     db = util.get_db(context)
 
     training_idx = int(update.message.text.strip("/{}_".format(c.CMD_TRAINING))) - 1
-    my_trainings = db.get_my_trainings(user.name, role)
+    my_trainings = db.get_my_trainings(user, role)
 
     if training_idx >= len(my_trainings):
         msg = "*Du kannst maximal /{}_{} auswählen*\n\n".format(c.CMD_TRAINING, len(my_trainings))
@@ -123,7 +127,8 @@ def cancel_training_attendee(update: Update, context: CallbackContext) -> int:
     :param context: Chat bot context
     :return: START
     """
-    user = update.message.from_user
+    tg_user = update.message.from_user
+    user = User(update.message.chat_id, tg_user)
     # Get database data
     db = util.get_db(context)
 
@@ -131,7 +136,7 @@ def cancel_training_attendee(update: Update, context: CallbackContext) -> int:
     if not ret:
         return c.CANCEL_TRAINING_ATTENDEE
 
-    db.cancel_subtrainings(cancelled_training["date"], user.name)
+    db.cancel_subtrainings(int(cancelled_training.get_date("%s")), user)
     msg = "Du wurdest erfolgreich aus der Teilnehmerliste entfernt"
 
     update.message.reply_text(
@@ -150,7 +155,8 @@ def cancel_training_coach(update: Update, context: CallbackContext) -> int:
     :param context: Chat bot context
     :return: START
     """
-    user = update.message.from_user
+    tg_user = update.message.from_user
+    user = User(update.message.chat_id, tg_user)
     # Get database data
     db = util.get_db(context)
 
@@ -158,8 +164,12 @@ def cancel_training_coach(update: Update, context: CallbackContext) -> int:
     if not ret:
         return c.CANCEL_TRAINING_COACH
 
-    db.remove_training_of_coach(user.name, cancelled_training["date"])
-    msg = "Du hast das Training am {} abgesagt".format(util.get_readable_date_from_int(int(cancelled_training["date"])))
+    db.remove_training_of_coach(user, int(cancelled_training.get_date("%s")))
+    date = cancelled_training.get_date(c.DATE_FORMAT)
+    msg = "Du hast das Training am {} abgesagt".format(date)
+    notifier = Notifier()
+    for attendee in cancelled_training.get_attendees():
+        notifier.notify_user("Das Training am *{}* wurde leider *abgesagt* \U0001F625".format(date), attendee)
 
     update.message.reply_text(
         msg,

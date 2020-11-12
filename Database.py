@@ -4,9 +4,10 @@ import os
 
 import pymongo
 
+from User import User
 import constants as c
-import util
 from Training import Training
+import util
 
 
 class Database:
@@ -60,30 +61,33 @@ class Database:
         }
         self.trainings.insert_one(training)
 
-    def subtraining_add_attendee(self, user: str, date: int, coach_user: str):
+    def subtraining_add_attendee(self, attendee: User, date: int, coach: User):
         """add an attendee to a subtraining"""
         # find the correct training by date
         training = self.trainings.find_one({"date": date})
         # delete user from all subtrainings
         for subtraining in training["subtrainings"]:
-            if user in subtraining["attendees"]:
-                subtraining["attendees"].remove(user)
+            for usr in subtraining["attendees"]:
+                if attendee.chat_id == usr["chat_id"]:
+                    subtraining["attendees"].remove(usr)
+        # add the user to the wanted training
         for subtraining in training["subtrainings"]:
-            if coach_user == subtraining["coach_user"]:
-                subtraining["attendees"].append(user)
+            if coach.get_chat_id() == subtraining["coach"]["chat_id"]:
+                subtraining["attendees"].append(attendee.get_dict())
                 break
         # overwrite the old object
         self.trainings.replace_one({"date": date}, training)
         return "user removed from all other trainings and added to desired subtraining"
 
-    def training_add_attendee(self, user: str, date: int):
+    def training_add_attendee(self, attendee: User, date: int):
         """add an attendee to a training"""
         # check if user already is an attendee
         training = self.trainings.find_one({"date": date})
-        if user in training["attendees"]:
-            return "user already is attendee"
+        for att in training["attendees"]:
+            if att["chat_id"] == attendee.get_chat_id():
+                return "user already is attendee"
         # add the user to the training
-        self.trainings.update({"date": date}, {"$push": {"attendees": user}})
+        self.trainings.update({"date": date}, {"$push": {"attendees": attendee.get_dict()}})
         return "user was added"
 
     def add_subtraining(self, training: Training):
@@ -95,19 +99,12 @@ class Database:
         :return: Returns False if training already set by user
         :rtype: bool
         """
-        training_data = {
-            "date": int(training.get_date("%s")),
-            "time": training.get_date("%H:%M"),
-            "coach": training.get_coach_full_name(),
-            "coach_user": training.get_coach_user_name(),
-            "title": training.get_title(),
-            "description": training.get_description(),
-            "attendees": []
-        }
+        training_data = training.get_dict()
+
         # check if user already has a training on that day
         main_training = self.trainings.find_one({"date": training_data["date"]})
         for subtraining in main_training["subtrainings"]:
-            if training_data["coach_user"] == subtraining["coach_user"]:
+            if training_data["coach"]["chat_id"] == subtraining["coach"]["chat_id"]:
                 return False
 
         # add the subtraining to the main training
@@ -132,7 +129,7 @@ class Database:
                 trainings_list.append(training)
         return trainings_list
 
-    def get_my_trainings(self, user: str, role: int) -> list:
+    def get_my_trainings(self, user: User, role: int) -> list:
         """return all the subtrainings the user is
         in as specified in the role
 
@@ -147,17 +144,18 @@ class Database:
         my_trainings = []
         for training in trainings:
             for subtraining in training["subtrainings"]:
-                if (user == subtraining["coach_user"] and role == c.COACH) \
-                        or user in subtraining["attendees"] and role == c.ATTENDEE:
+                tr = Training(from_dict=subtraining)
+                if (user.get_chat_id() == tr.get_coach().get_chat_id() and role == c.COACH)\
+                        or (user in tr.get_attendees() and role == c.ATTENDEE):
                     if util.is_in_future(subtraining["date"]):
-                        my_trainings.append(subtraining)
+                        my_trainings.append(tr)
         return my_trainings
 
-    def get_subtrainings(self, user: str) -> list:
+    def get_subtrainings(self, user: User) -> list:
         """get all subtrainings for a user
 
-        :param user: string with telegram username
-        :type user: str
+        :param user: user object
+        :type user: obj
         :return: list of dicts with all subtrainings
         :rtype: list
         """
@@ -165,34 +163,37 @@ class Database:
         user_subtrainings = []
         for training in trainings:
             for sub in training["subtrainings"]:
-                if user in sub["attendees"]:
-                    user_subtrainings.append(sub)
+                tr = Training(from_dict=sub)
+                for attendee in tr.get_attendees():
+                    if user.get_chat_id() == attendee.get_chat_id():
+                        user_subtrainings.append(tr)
         return user_subtrainings
 
-    def cancel_subtrainings(self, date: int, user: str):
-        """remove the user from his/her subtraining by date
+    def cancel_subtrainings(self, date: int, user: User):
+        """remove user from the subtraining
 
-        :param date: date as integer in unix timestamp
+        :param date: date as unix-timestamp
         :type date: int
-        :param user: string with telegram username
-        :type user: str
+        :param user: user object
+        :type user: user
         :return: return success message
         :rtype: str
         """
         training = self.trainings.find_one({"date": date})
         for subtraining in training["subtrainings"]:
-            if user in subtraining["attendees"]:
-                subtraining["attendees"].remove(user)
+            for attendee in subtraining["attendees"]:
+                if attendee["chat_id"] == user.get_chat_id():
+                    subtraining["attendees"].remove(attendee)
         # replace the old database entry
         self.trainings.replace_one({"date": date}, training)
         return "user was removed"
 
-    def remove_training_of_coach(self, coach_user: str, date: int) -> dict:
+    def remove_training_of_coach(self, coach: User, date: int) -> Training:
         """remove training by coach username and date. Return data of 
         the deleted training
 
-        :param coach_user: username coach
-        :type coach_user: str
+        :param coach: object of type Coach
+        :type coach: object
         :param date: date as int unix timestamp
         :type date: int
         :return: dict with data of the deleted training 
@@ -200,13 +201,13 @@ class Database:
         """
         training = self.trainings.find_one({"date": date})
         for subtraining in training["subtrainings"]:
-            if coach_user == subtraining["coach_user"]:
+            if coach.get_chat_id() == subtraining["coach"]["chat_id"]:
                 removed_subtraining = subtraining
                 # remove subtraining
                 training["subtrainings"].remove(subtraining)
                 # write to database
                 self.trainings.replace_one({"date": date}, training)
-                return removed_subtraining
+                return Training(from_dict=removed_subtraining)
 
     def create_trainings(self, number_of_days: int):
         """Read training weekdays and time from the config file and 
@@ -242,13 +243,16 @@ class Database:
         """
         trainings_list = self.trainings.find().sort("date")
         trainings = []
+
+        added_trainings = 0
         for tr in trainings_list:
+            if added_trainings >= number_of_trainings:
+                break
             if util.is_in_future(tr["date"]):
                 tr["date"] = datetime.datetime.fromtimestamp(tr["date"])
                 trainings.append(tr)
-        if len(trainings) >= number_of_trainings:
-            trainings = trainings[0:number_of_trainings]
-            return trainings
+                added_trainings += 1
+        return trainings
 
     def delete_all_trainings(self):
         """delete all training database entries

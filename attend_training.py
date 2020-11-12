@@ -5,6 +5,7 @@ from telegram.ext import CallbackContext
 
 import constants as c
 import util
+from User import User
 
 logging.basicConfig(
     format=c.LOG_FORMAT, level=logging.INFO
@@ -41,7 +42,7 @@ def bot_attend(update: Update, context: CallbackContext) -> int:
             commands.append([command])
             msg += "{}: {}\n".format(command, st["title"])
             description = st["description"]
-            msg += "<u>Trainer:</u> {}\n".format(st["coach"])
+            msg += "<u>Trainer:</u> {}\n".format(st["coach"]["full_name"])
             if len(description) > 0:
                 msg += "<u>Info:</u> {}\n".format(st["description"])
             msg += "\n"
@@ -67,7 +68,9 @@ def bot_attend_save(update: Update, context: CallbackContext) -> int:
     """
     logger.info("User %s attend a training", update.message.from_user.name)
 
-    user = update.message.from_user.name
+    user = update.message.from_user
+    tg_user = User(update.message.chat_id, user)
+
     msg = update.message.text
     msg = msg.strip("/{}_".format(c.CMD_TRAINING))
 
@@ -84,12 +87,13 @@ def bot_attend_save(update: Update, context: CallbackContext) -> int:
     date = training["date"]
     training_date = int(date.strftime("%s"))
 
+    coach = User(from_dict=sub_training["coach"])
     # Add the user as attendee to the selected subtraining
-    db.subtraining_add_attendee(user, training_date, sub_training["coach_user"])
+    db.subtraining_add_attendee(tg_user, training_date, coach)
 
     msg = "Glückwunsch, du nimmst am *{}* an *{}* mit *{}* teil \U0001F4AA\U0001F4AA\U0001F4AA \n\n" \
           "Wir freuen uns auf dich!".format(date.strftime(c.DATE_FORMAT), sub_training["title"].replace("\n", " "),
-                                            sub_training["coach"])
+                                            coach.get_full_name())
     update.message.reply_text(
         msg,
         parse_mode=ParseMode.MARKDOWN,

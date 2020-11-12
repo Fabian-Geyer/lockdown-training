@@ -5,6 +5,7 @@ from telegram.ext import CallbackContext
 
 import constants as c
 import util
+from User import User
 
 logging.basicConfig(
     format=c.LOG_FORMAT, level=logging.INFO
@@ -19,12 +20,13 @@ def print_info(update: Update, context: CallbackContext) -> int:
     :param context: Chat bot context
     :return: START
     """
-    user = update.message.from_user
+    tg_user = update.message.from_user
     # Get database data
     db = util.get_db(context)
+    user = User(update.message.chat_id, tg_user)
 
-    as_coach = db.get_my_trainings(user.name, c.COACH)
-    as_attendee = db.get_my_trainings(user.name, c.ATTENDEE)
+    as_coach = db.get_my_trainings(user, c.COACH)
+    as_attendee = db.get_my_trainings(user, c.ATTENDEE)
 
     msg = ""
     if len(as_coach) > 0:
@@ -40,7 +42,7 @@ def print_info(update: Update, context: CallbackContext) -> int:
         msg += trainings
 
     if msg == "":
-        msg += "Du gibst kein Training als Coach und bist auch zu keinem Trianing angemeldet?\n" \
+        msg += "Du gibst kein Training als Coach und bist auch zu keinem Training angemeldet?\n" \
                "Zeit das ganz schnell zu ändern!"
 
     update.message.reply_text(
