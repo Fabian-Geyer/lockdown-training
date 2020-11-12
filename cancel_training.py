@@ -9,7 +9,7 @@ from User import User
 from Notifier import Notifier
 
 logging.basicConfig(
-    format=c.LOG_FORMAT, level=logging.INFO
+    format=c.LOG_FORMAT, level=logging.INFO, filename="coachbot.log"
 )
 logger = logging.getLogger(__name__)
 

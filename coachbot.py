@@ -23,7 +23,7 @@ from Training import Training
 
 locale.setlocale(locale.LC_TIME, 'de_DE.UTF-8')
 logging.basicConfig(
-    format=c.LOG_FORMAT, level=logging.INFO
+    format=c.LOG_FORMAT, level=logging.INFO, filename="coachbot.log"
 )
 logger = logging.getLogger(__name__)
 
