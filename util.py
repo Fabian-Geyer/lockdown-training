@@ -1,4 +1,6 @@
 import datetime
+import random
+import string
 
 from telegram import ReplyKeyboardMarkup, Update
 from telegram.ext import CallbackContext
@@ -116,3 +118,14 @@ def is_in_future(unix_timestamp: int) -> bool:
     if now < date:
         return True
     return False
+
+def get_random_string(num_of_chars: int) -> str:
+    """Return a random string of length n 
+    with ASCII letters and digits 
+
+    :param num_of_chars: length of the desired string
+    :type num_of_chars: int
+    :return: random string of desired length
+    :rtype: str
+    """
+    return ''.join([random.choice(string.ascii_letters + string.digits) for n in range(num_of_chars)])
