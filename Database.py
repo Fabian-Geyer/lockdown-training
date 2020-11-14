@@ -60,7 +60,8 @@ class Database:
             "date": unix_timestamp,
             "time": time,
             "attendees": [],
-            "subtrainings": []
+            "subtrainings": [],
+            "link": c.MEETING_BASE_URL + util.get_random_string(num_of_chars=20)
         }
         self.trainings.insert_one(training)
 
