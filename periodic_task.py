@@ -7,7 +7,7 @@ import constants as c
 def hourly_check():
     """[summary]
     """
-    db = Database(c.CONFIG_FILE)
+    db = Database(c.CONFIG_FILE, debug_mode=True)
     next_training = db.next_trainings(number_of_trainings=1)[0]
     now = datetime.datetime.now()
     timedelta = datetime.timedelta(minutes=40)
