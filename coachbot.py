@@ -2,6 +2,7 @@ import json
 import locale
 import logging
 import os
+import argparse
 
 from telegram import ReplyKeyboardRemove, Update
 from telegram.ext import (
@@ -98,11 +99,19 @@ def main(config_file: str) -> bool:
         logger.error("Config file {} not found".format(config_file))
         return False
 
+    # add argparser
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--debug', action='store_true')
+    args = parser.parse_args()
+
     # read token from config file
     with open(config_file) as f:
         conf = json.load(f)
+    if args.debug:
+        bot_token = conf["debug_bot_token"]
+    else:
+        bot_token = conf["bot_token"]
 
-    bot_token = conf["bot_token"]
     # Create the Updater and pass it your bot's token.
     updater = Updater(token=bot_token, use_context=True)
 
