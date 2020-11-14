@@ -40,6 +40,7 @@ class Database:
 
     def add_training(self, training_date, time):
         """add one training to the database with a unix timestamp
+        and a random meeting link
 
         :param training_date: day of the new training
         :type training_date: datetime.date object
@@ -61,7 +62,7 @@ class Database:
             "time": time,
             "attendees": [],
             "subtrainings": [],
-            "link": c.MEETING_BASE_URL + util.get_random_string(num_of_chars=20)
+            "link": c.MEETING_BASE_URL + util.get_random_string(num_of_chars=c.RANDOM_STR_LEN)
         }
         self.trainings.insert_one(training)
 
@@ -96,7 +97,8 @@ class Database:
 
     def add_subtraining(self, training: Training):
         """Add a subtraining to the database, only if the given
-        user has not signed in a training yet that day
+        user has not signed in a training yet that day.
+        Also give the subtraining a random meeting link
 
         :param training: Training object with user chosen data
         :type training: Training
@@ -104,6 +106,8 @@ class Database:
         :rtype: bool
         """
         training_data = training.get_dict()
+        # add random link to database
+        training_data["link"] = c.MEETING_BASE_URL + util.get_random_string(num_of_chars=c.RANDOM_STR_LEN)
 
         # check if user already has a training on that day
         main_training = self.trainings.find_one({"date": training_data["date"]})
