@@ -11,15 +11,15 @@ import util
 
 
 class Database:
-    def __init__(self, config_file):
+    def __init__(self, config_file, debug_mode: bool):
         self.config_file = config_file
         self.connect_string = ""
         self.client = None
         self.database = None
         self.trainings = None
-        self.connect()
+        self.connect(debug_mode)
 
-    def connect(self):
+    def connect(self, debug_mode: bool):
         # get configuration
         if not os.path.isfile(self.config_file):
             return False
@@ -32,7 +32,10 @@ class Database:
         self.client = pymongo.MongoClient(self.connect_string)
         self.database = self.client.lockdown_training
         # collection for trainings
-        self.trainings = self.database["trainings"]
+        if debug_mode:
+            self.trainings = self.database["debug_trainings"]
+        else:
+            self.trainings = self.database["trainings"]
         return True
 
     def add_training(self, training_date, time):

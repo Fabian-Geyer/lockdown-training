@@ -38,7 +38,7 @@ def start(update: Update, context: CallbackContext) -> int:
     """
     # Init data
     # Enable logging
-    db = Database(c.CONFIG_FILE)
+    db = Database(c.CONFIG_FILE, debug_mode=args.debug)
     training = Training()
 
     # Store data in user context
@@ -89,6 +89,7 @@ def select_action(update: Update, context: CallbackContext) -> int:
 
 
 def main(config_file: str) -> bool:
+    global args
     """
     Main function of the training telegram bot
     :param config_file: Path to the config file as string
