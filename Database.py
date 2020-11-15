@@ -289,4 +289,4 @@ class Database:
                 for att in subtraining["attendees"]:
                     if user.get_chat_id()==att["chat_id"]:
                         att["notified_far"] = flag
-        self.trainings.replace_one({"date": subtraining.get_date()}, training)
+        self.trainings.replace_one({"date": int(subtraining.get_date())}, training)
