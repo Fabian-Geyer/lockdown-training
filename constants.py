@@ -1,3 +1,5 @@
+import datetime
+
 START = 0
 TRAINING_DATE = 1
 TRAINING_TITLE = 2
@@ -45,4 +47,6 @@ DATE_FORMAT = "%a, %d.%m.%y um %H:%M"
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 LOG_FILE = "coachbot.log"
 
-NEXT_TRAINING_NOTIFY_DAYS = 2
+NOTIFICATION_FREQUENCY_SECONDS = 60
+NEXT_TRAINING_NOTIFY_FAR = datetime.timedelta(days=1)
+NEXT_TRAINING_NOTIFY_NOW = datetime.timedelta(minutes=5)
