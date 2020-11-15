@@ -59,12 +59,15 @@ def notify_user(db: Database, sub_tr: Training, notifier: Notifier, user: User, 
     """
     is_now = time_to_training <= c.NEXT_TRAINING_NOTIFY_NOW
     is_far = time_to_training < c.NEXT_TRAINING_NOTIFY_FAR
-    if is_now and user.is_notified_now() is True:
+    if is_now is True:
+        if user.is_notified_now():
+            return
         db.set_notify_now_flag(True, sub_tr, user)
-        return
-    elif is_far and user.is_notified_far() is True:
+    elif is_far is True:
+        if user.is_notified_far():
+            return
         db.set_notify_far_flag(True, sub_tr, user)
-        return
+
     notifier.notify_by_chat_id(
         message=message,
         chat_id=user.get_chat_id()
@@ -108,7 +111,7 @@ def main():
     db = Database(c.CONFIG_FILE, debug_mode=c.DEBUG_MODE)
     next_training = db.next_trainings(number_of_trainings=1)[0]
     now = datetime.datetime.now()
-    training_start_time = datetime.datetime.fromtimestamp(next_training["date"])
+    training_start_time = next_training["date"]
     if now > training_start_time:
         return
     time_to_training = training_start_time - now
