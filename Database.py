@@ -268,7 +268,7 @@ class Database:
         self.trainings.drop()
 
     def set_notify_now_flag(self, flag: bool, subtraining: Training, user: User):
-        training = self.trainings.find_one({"date": subtraining.get_date()})
+        training = self.trainings.find_one({"date": int(subtraining.get_date())})
         for subtraining in training:
             if user.is_coach():
                 if user.get_chat_id()==subtraining["coach"]["chat_id"]:
@@ -279,8 +279,8 @@ class Database:
                         att["notified_now"] = flag
         self.trainings.replace_one({"date": subtraining.get_date()}, training)
 
-    def set_far_notify_flag(self, flag: bool, subtraining: Training, user: User):
-        training = self.trainings.find_one({"date": subtraining.get_date()})
+    def set_notify_far_flag(self, flag: bool, subtraining: Training, user: User):
+        training = self.trainings.find_one({"date": int(subtraining.get_date())})
         for subtraining in training:
             if user.is_coach():
                 if user.get_chat_id()==subtraining["coach"]["chat_id"]:
