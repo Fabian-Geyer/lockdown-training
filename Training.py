@@ -196,7 +196,7 @@ class Training:
         """
         logger.info("User %s wants to offer a training", update.message.from_user.full_name)
         training = util.get_training(context)
-        training.set_coach(User(update.message.chat_id, update.message.from_user))
+        training.set_coach(User(update.message.chat_id, update.message.from_user, c.COACH))
         training.date_selector(update, context)
         return c.TRAINING_DATE
 

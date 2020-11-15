@@ -95,7 +95,7 @@ def cancel_training(update: Update, context: CallbackContext, role: int):
     :return: Tuple of training and true or false
     """
     tg_user = update.message.from_user
-    user = User(update.message.chat_id, tg_user)
+    user = User(update.message.chat_id, tg_user, role)
     # Get database data
     db = util.get_db(context)
 
@@ -128,7 +128,7 @@ def cancel_training_attendee(update: Update, context: CallbackContext) -> int:
     :return: START
     """
     tg_user = update.message.from_user
-    user = User(update.message.chat_id, tg_user)
+    user = User(update.message.chat_id, tg_user, c.ATTENDEE)
     # Get database data
     db = util.get_db(context)
 
@@ -156,7 +156,7 @@ def cancel_training_coach(update: Update, context: CallbackContext) -> int:
     :return: START
     """
     tg_user = update.message.from_user
-    user = User(update.message.chat_id, tg_user)
+    user = User(update.message.chat_id, tg_user, c.COACH)
     # Get database data
     db = util.get_db(context)
 

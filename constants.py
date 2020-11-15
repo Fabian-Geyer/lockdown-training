@@ -1,3 +1,5 @@
+import datetime
+
 START = 0
 TRAINING_DATE = 1
 TRAINING_TITLE = 2
@@ -8,6 +10,11 @@ TRAINING_ADD = 6
 CANCEL_TRAINING = 7
 CANCEL_TRAINING_ATTENDEE = 8
 CANCEL_TRAINING_COACH = 9
+
+MEETING_BASE_URL = "https://meet.jit.si/"
+RANDOM_STR_LEN = 20
+
+DEBUG_MODE = True
 
 COACH = 100
 ATTENDEE = 101
@@ -39,3 +46,7 @@ DATE_FORMAT = "%a, %d.%m.%y um %H:%M"
 
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 LOG_FILE = "coachbot.log"
+
+NOTIFICATION_FREQUENCY_SECONDS = 60
+NEXT_TRAINING_NOTIFY_FAR = datetime.timedelta(days=1)
+NEXT_TRAINING_NOTIFY_NOW = datetime.timedelta(minutes=5)
