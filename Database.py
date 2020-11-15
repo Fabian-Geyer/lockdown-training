@@ -269,24 +269,24 @@ class Database:
 
     def set_notify_now_flag(self, flag: bool, subtraining: Training, user: User):
         training = self.trainings.find_one({"date": int(subtraining.get_date())})
-        for subtraining in training:
+        for sub in training["subtrainings"]:
             if user.is_coach():
-                if user.get_chat_id()==subtraining["coach"]["chat_id"]:
-                    subtraining["coach"]["notified_now"] = flag
+                if user.get_chat_id() == sub["coach"]["chat_id"]:
+                    sub["coach"]["notified_now"] = flag
             if user.is_attendee():
-                for att in subtraining["attendees"]:
-                    if user.get_chat_id()==att["chat_id"]:
+                for att in sub["attendees"]:
+                    if user.get_chat_id() == att["chat_id"]:
                         att["notified_now"] = flag
         self.trainings.replace_one({"date": subtraining.get_date()}, training)
 
     def set_notify_far_flag(self, flag: bool, subtraining: Training, user: User):
         training = self.trainings.find_one({"date": int(subtraining.get_date())})
-        for subtraining in training:
+        for sub in training["subtrainings"]:
             if user.is_coach():
-                if user.get_chat_id()==subtraining["coach"]["chat_id"]:
-                    subtraining["coach"]["notified_far"] = flag
+                if user.get_chat_id() == sub["coach"]["chat_id"]:
+                    sub["coach"]["notified_far"] = flag
             if user.is_attendee():
-                for att in subtraining["attendees"]:
-                    if user.get_chat_id()==att["chat_id"]:
+                for att in sub["attendees"]:
+                    if user.get_chat_id() == att["chat_id"]:
                         att["notified_far"] = flag
         self.trainings.replace_one({"date": subtraining.get_date()}, training)
