@@ -266,3 +266,27 @@ class Database:
         """delete all training database entries
         """
         self.trainings.drop()
+
+    def set_notify_now_flag(self, flag: bool, subtraining: Training, user: User, role: str):
+        training = self.trainings.find_one({"date": subtraining.get_date()})
+        for subtraining in training:
+            if user.is_coach():
+                if user.get_chat_id()==subtraining["coach"]["chat_id"]:
+                    subtraining["coach"]["notify_flag_now"] = flag
+            if user.is_attendee():
+                for att in subtraining["attendees"]:
+                    if user.get_chat_id()==att["chat_id"]:
+                        att["notify_flag_now"] = flag
+        self.trainings.replace_one({"date": subtraining.get_date()}, training)
+
+    def set_far_notify_flag(self, flag: bool, subtraining: Training, user: User):
+        training = self.trainings.find_one({"date": subtraining.get_date()})
+        for subtraining in training:
+            if user.is_coach():
+                if user.get_chat_id()==subtraining["coach"]["chat_id"]:
+                    subtraining["coach"]["notify_flag_far"] = flag
+            if user.is_attendee():
+                for att in subtraining["attendees"]:
+                    if user.get_chat_id()==att["chat_id"]:
+                        att["notify_flag_far"] = flag
+        self.trainings.replace_one({"date": subtraining.get_date()}, training)
