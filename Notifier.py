@@ -22,11 +22,5 @@ class Notifier:
         self.bot.send_message(
             chat_id=user.get_chat_id(),
             text=message,
-            parse_mode=ParseMode.MARKDOWN)
-
-    def notify_by_chat_id(self, message: str, chat_id: int):
-        self.bot.send_message(
-            chat_id=chat_id,
-            text=message,
-            disable_web_page_preview=True
-            )
+            parse_mode=ParseMode.MARKDOWN,
+            disable_web_page_preview=True)

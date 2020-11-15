@@ -16,13 +16,13 @@ def get_message_next_day(training: dict, subtraining: dict) -> str:
     :return: message to user
     :rtype: str
     """
-    message = "Morgen hast du Training um " +\
-              training["time"] + " Uhr!"\
+    message = "*Morgen hast du Training um " +\
+              training["time"] + " Uhr!*"\
               "\n\nErwärmung:" + \
               "\n" + training["link"] +\
               "\n\nTraining bei " + subtraining["coach"]["full_name"] + \
               ": \n" + subtraining["link"] + \
-              "\n Viel Spaß!"
+              "\n\nViel Spaß!\U0001F4AA"
     return message
 
 
@@ -36,12 +36,12 @@ def get_message(training: dict, subtraining: dict) -> str:
     :return: message to be sent
     :rtype: str
     """
-    message = "Das Training startet jetzt!" +\
-              "\n\n Starte durch mit der Erwärmung:"\
+    message = "*Das Training startet jetzt!*" +\
+              "\n\nStarte durch mit der Erwärmung:"\
               "\n" + training["link"] +\
               "\n\nDanach gibt's dein Training bei " + subtraining["coach"]["full_name"] + \
               ": \n" + subtraining["link"] + \
-              "\n Viel Spaß!"
+              "\n\nViel Spaß!\U0001F4AA"
     return message
 
 
@@ -68,10 +68,7 @@ def notify_user(db: Database, sub_tr: Training, notifier: Notifier, user: User, 
             return
         db.set_notify_far_flag(True, sub_tr, user)
 
-    notifier.notify_by_chat_id(
-        message=message,
-        chat_id=user.get_chat_id()
-    )
+    notifier.notify_user(message=message, user=user)
 
 
 def notify_all_attendees(db: Database, training: dict, notifier: Notifier, time_to_training: datetime.timedelta):
