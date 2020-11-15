@@ -48,10 +48,10 @@ class User:
         return self.notified_far
 
     def is_attendee(self):
-        return self.role == c.COACH
+        return self.role == c.ATTENDEE
 
     def is_coach(self):
-        return self.role == c.ATTENDEE
+        return self.role == c.COACH
 
     def get_dict(self) -> dict:
         return {"chat_id": self.chat_id,
