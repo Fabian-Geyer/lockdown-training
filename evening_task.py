@@ -1,8 +1,8 @@
 from Database import Database
 from Notifier import Notifier
-from Training import Training
 import datetime
 import constants as c
+
 
 def notify_all_attendees(training: dict, notifier: Notifier):
     """notify all attendees about their traings tomorrow.
@@ -21,6 +21,7 @@ def notify_all_attendees(training: dict, notifier: Notifier):
             )
     return
 
+
 def get_message(training: dict, subtraining: dict) -> str:
     """create the message for the given training and subtraining
 
@@ -32,12 +33,12 @@ def get_message(training: dict, subtraining: dict) -> str:
     :rtype: str
     """
     message = "Morgen hast du Training um " +\
-            training["time"] + " Uhr!"\
-            "\n\nErwärmung:" + \
-            "\n" + training["link"] +\
-            "\n\nTraining bei " + subtraining["coach"]["full_name"] + \
-            ": \n" + subtraining["link"] + \
-            "\n Viel Spaß!"
+              training["time"] + " Uhr!"\
+              "\n\nErwärmung:" + \
+              "\n" + training["link"] +\
+              "\n\nTraining bei " + subtraining["coach"]["full_name"] + \
+              ": \n" + subtraining["link"] + \
+              "\n Viel Spaß!"
     return message
     
 
@@ -47,7 +48,7 @@ def main():
     
     next_tr = db.next_trainings(number_of_trainings=1)[0]
     training_day = next_tr["date"].date()
-    tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+    tomorrow = datetime.date.today() + datetime.timedelta(days=c.NEXT_TRAINING_NOTIFY_DAYS)
     
     if training_day == tomorrow:
         notify_all_attendees(training=next_tr, notifier=notifier)

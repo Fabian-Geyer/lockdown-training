@@ -44,3 +44,5 @@ DATE_FORMAT = "%a, %d.%m.%y um %H:%M"
 
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 LOG_FILE = "coachbot.log"
+
+NEXT_TRAINING_NOTIFY_DAYS = 2
