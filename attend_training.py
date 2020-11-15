@@ -69,7 +69,7 @@ def bot_attend_save(update: Update, context: CallbackContext) -> int:
     logger.info("User %s attend a training", update.message.from_user.name)
 
     user = update.message.from_user
-    tg_user = User(update.message.chat_id, user)
+    tg_user = User(update.message.chat_id, user, c.ATTENDEE)
 
     msg = update.message.text
     msg = msg.strip("/{}_".format(c.CMD_TRAINING))
