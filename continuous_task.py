@@ -60,10 +60,10 @@ def notify_user(db: Database, sub_tr: Training, notifier: Notifier, user: User, 
     is_now = time_to_training <= c.NEXT_TRAINING_NOTIFY_NOW
     is_far = time_to_training < c.NEXT_TRAINING_NOTIFY_FAR
     if is_now and user.is_notified_now() is True:
-        # db.set_notified_now(sub_tr, user)
+        db.set_notify_now_flag(True, sub_tr, user)
         return
     elif is_far and user.is_notified_far() is True:
-        # db.set_notified_far(sub_tr, user)
+        db.set_notify_far_flag(True, sub_tr, user)
         return
     notifier.notify_by_chat_id(
         message=message,
