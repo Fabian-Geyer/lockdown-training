@@ -277,7 +277,7 @@ class Database:
                 for att in sub["attendees"]:
                     if user.get_chat_id() == att["chat_id"]:
                         att["notified_now"] = flag
-        self.trainings.replace_one({"date": subtraining.get_date()}, training)
+        self.trainings.replace_one({"date": int(subtraining.get_date())}, training)
 
     def set_notify_far_flag(self, flag: bool, subtraining: Training, user: User):
         training = self.trainings.find_one({"date": int(subtraining.get_date())})
@@ -289,4 +289,4 @@ class Database:
                 for att in sub["attendees"]:
                     if user.get_chat_id() == att["chat_id"]:
                         att["notified_far"] = flag
-        self.trainings.replace_one({"date": subtraining.get_date()}, training)
+        self.trainings.replace_one({"date": int(subtraining.get_date())}, training)
