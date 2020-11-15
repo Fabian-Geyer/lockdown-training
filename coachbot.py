@@ -2,7 +2,6 @@ import json
 import locale
 import logging
 import os
-import argparse
 
 from telegram import ReplyKeyboardRemove, Update
 from telegram.ext import (
@@ -38,7 +37,7 @@ def start(update: Update, context: CallbackContext) -> int:
     """
     # Init data
     # Enable logging
-    db = Database(c.CONFIG_FILE, debug_mode=args.debug)
+    db = Database(c.CONFIG_FILE, debug_mode=c.DEBUG_MODE)
     training = Training()
 
     # Store data in user context
@@ -89,7 +88,6 @@ def select_action(update: Update, context: CallbackContext) -> int:
 
 
 def main(config_file: str) -> bool:
-    global args
     """
     Main function of the training telegram bot
     :param config_file: Path to the config file as string
@@ -100,15 +98,10 @@ def main(config_file: str) -> bool:
         logger.error("Config file {} not found".format(config_file))
         return False
 
-    # add argparser
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--debug', action='store_true')
-    args = parser.parse_args()
-
     # read token from config file
     with open(config_file) as f:
         conf = json.load(f)
-    if args.debug:
+    if c.DEBUG_MODE:
         bot_token = conf["debug_bot_token"]
     else:
         bot_token = conf["bot_token"]
