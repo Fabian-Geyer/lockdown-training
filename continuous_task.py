@@ -2,6 +2,8 @@ from Database import Database
 from Notifier import Notifier
 import datetime
 import constants as c
+from User import User
+from Training import Training
 
 
 def get_message_next_day(training: dict, subtraining: dict) -> str:
@@ -43,9 +45,37 @@ def get_message(training: dict, subtraining: dict) -> str:
     return message
 
 
-def notify_all_attendees(training: dict, notifier: Notifier, time_to_training: datetime.timedelta):
+def notify_user(db: Database, sub_tr: Training, notifier: Notifier, user: User, time_to_training: datetime.timedelta, message: str):
+    """
+    Notify a user with the given message
+
+    :param db: Database object
+    :param sub_tr: Subtraining object
+    :param notifier: Notifier object
+    :param user: User object
+    :param time_to_training: Time till the next training starts
+    :param message: Notification message
+    :return:
+    """
+    is_now = time_to_training <= c.NEXT_TRAINING_NOTIFY_NOW
+    is_far = time_to_training < c.NEXT_TRAINING_NOTIFY_FAR
+    if is_now and user.is_notified_now() is True:
+        # db.set_notified_now(sub_tr, user)
+        return
+    elif is_far and user.is_notified_far() is True:
+        # db.set_notified_far(sub_tr, user)
+        return
+    notifier.notify_by_chat_id(
+        message=message,
+        chat_id=user.get_chat_id()
+    )
+
+
+def notify_all_attendees(db: Database, training: dict, notifier: Notifier, time_to_training: datetime.timedelta):
     """notify all attendees about their trainings now.
 
+    :param db: Database object
+    :type db: Database
     :param training: training data
     :type training: dict
     :param notifier: notifier instance
@@ -54,21 +84,22 @@ def notify_all_attendees(training: dict, notifier: Notifier, time_to_training: d
     :type time_to_training: datetime.timedelta
     """
 
+    is_now = time_to_training <= c.NEXT_TRAINING_NOTIFY_NOW
+    is_far = time_to_training < c.NEXT_TRAINING_NOTIFY_FAR
+
     for sub in training["subtrainings"]:
-        if time_to_training <= c.NEXT_TRAINING_NOTIFY_NOW:
+        sub_tr = Training(from_dict=sub)
+        if is_now:
             message = get_message(training=training, subtraining=sub)
-        elif time_to_training < c.NEXT_TRAINING_NOTIFY_FAR:
+        elif is_far:
             message = get_message_next_day(training=training, subtraining=sub)
         else:
             return
         for att in sub["attendees"]:
-            if (time_to_training <= c.NEXT_TRAINING_NOTIFY_NOW and sub["notified_now"] == 1) \
-               or (time_to_training < c.NEXT_TRAINING_NOTIFY_FAR and sub["notified_far"] == 1):
-                continue
-            notifier.notify_by_chat_id(
-                message=message,
-                chat_id=att["chat_id"]
-            )
+            attendee = User(from_dict=att)
+            notify_user(db, sub_tr, notifier, attendee, time_to_training, message)
+        coach = sub_tr.get_coach()
+        notify_user(db, sub_tr, notifier, coach, time_to_training, message)
     return
 
 
@@ -81,7 +112,7 @@ def main():
     if now > training_start_time:
         return
     time_to_training = training_start_time - now
-    notify_all_attendees(training=next_training, notifier=notifier, time_to_training=time_to_training)
+    notify_all_attendees(db=db, training=next_training, notifier=notifier, time_to_training=time_to_training)
     
 
 if __name__ == "__main__":
