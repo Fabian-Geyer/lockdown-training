@@ -6,7 +6,7 @@ from User import User
 from Training import Training
 
 
-def get_message_next_day(training: dict, subtraining: dict) -> str:
+def get_message_next_day(training: dict, subtraining: dict, day_str: str) -> str:
     """create the message for the given training and subtraining
 
     :param training: training date
@@ -16,7 +16,7 @@ def get_message_next_day(training: dict, subtraining: dict) -> str:
     :return: message to user
     :rtype: str
     """
-    message = "*Morgen hast du Training um " +\
+    message = "*Du hast " + day_str + " Training um " +\
               training["time"] + " Uhr!*"\
               "\n\nErwärmung:" + \
               "\n" + training["link"] +\
@@ -92,7 +92,24 @@ def notify_all_attendees(db: Database, training: dict, notifier: Notifier, time_
         if is_now:
             message = get_message(training=training, subtraining=sub)
         elif is_far:
-            message = get_message_next_day(training=training, subtraining=sub)
+            if datetime.datetime.today().day == sub_tr.date.day:
+                day_str = "heute"
+            elif (datetime.datetime.today() + datetime.timedelta(days=1)).day == sub_tr.date.day:
+                day_str = "morgen"
+            elif (datetime.datetime.today() + datetime.timedelta(days=1)).day == sub_tr.date.day:
+                day_str = "übermorgen"
+            else:
+                time_diff = (sub_tr.date - datetime.datetime.today())
+                num_days = time_diff.days
+                if time_diff.seconds > 0:
+                    num_days += 1
+                if num_days == 1:
+                    day_str = "morgen"
+                elif num_days == 2:
+                    day_str = "übermorgen"
+                else:
+                    day_str = "in " + str(num_days) + " Tagen"
+            message = get_message_next_day(training=training, subtraining=sub, day_str=day_str)
         else:
             return
         for att in sub["attendees"]:
