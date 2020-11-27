@@ -31,7 +31,7 @@ def print_info(update: Update, context: CallbackContext) -> int:
     msg = ""
     if len(as_coach) > 0:
         msg += "*In diesen Trainings bist du Trainer:*\n"
-        trainings, _ = util.get_training_list(as_coach)
+        trainings, _ = util.get_training_list(as_coach, with_attendees=True)
         msg += trainings
 
     if len(as_attendee) > 0:

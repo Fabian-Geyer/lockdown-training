@@ -80,12 +80,13 @@ def get_readable_date_from_datetime(date: datetime) -> str:
     return date.strftime(c.DATE_FORMAT)
 
 
-def get_training_list(trainings: list, with_commands=False) -> [str, list]:
+def get_training_list(trainings: list, with_commands=False, with_attendees=False) -> [str, list]:
     """
     Get a list of trainings as formatted text.
     If needed commands to select each training can be generated
     :param trainings: List of trainings from the database
     :param with_commands: Bool to select whether to print commands, default:False
+    :param with_attendees: If true, also get a list of attendees of the training
     :return: The formatted text and a list of commands
     """
     msg = ""
@@ -98,7 +99,10 @@ def get_training_list(trainings: list, with_commands=False) -> [str, list]:
             commands.append([command])
         else:
             msg += "Titel: "
-        msg += "{}\n\n".format(t.get_title().replace("\n", " "))
+        msg += "{}".format(t.get_title().replace("\n", " "))
+        if with_attendees:
+            msg += "\nTeilnehmer: {}".format(", ".join([i.get_full_name() for i in t.get_attendees()]))
+        msg += "\n\n"
     if with_commands:
         return msg, commands
     else:
@@ -118,6 +122,7 @@ def is_in_future(unix_timestamp: int) -> bool:
     if now < date:
         return True
     return False
+
 
 def get_random_string(num_of_chars: int) -> str:
     """Return a random string of length n 
