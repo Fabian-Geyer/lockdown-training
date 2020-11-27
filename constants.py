@@ -49,4 +49,4 @@ LOG_FILE = "coachbot.log"
 
 NOTIFICATION_FREQUENCY_SECONDS = 60
 NEXT_TRAINING_NOTIFY_FAR = datetime.timedelta(days=1)
-NEXT_TRAINING_NOTIFY_NOW = datetime.timedelta(minutes=5)
+NEXT_TRAINING_NOTIFY_NOW = datetime.timedelta(minutes=30)
