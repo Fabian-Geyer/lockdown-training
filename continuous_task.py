@@ -36,7 +36,9 @@ def get_message(training: dict, subtraining: dict) -> str:
     :return: message to be sent
     :rtype: str
     """
-    message = "*Das Training startet jetzt!*" +\
+    message = "*Das Training startet in " + \
+              str(int(c.NEXT_TRAINING_NOTIFY_NOW.total_seconds()/60)) + \
+              " Minuten!*" +\
               "\n\nStarte durch mit der Erwärmung:"\
               "\n" + training["link"] +\
               "\n\nDanach gibt's dein Training bei " + subtraining["coach"]["full_name"] + \
