@@ -18,7 +18,7 @@ def get_message_next_day(training: dict, subtraining: dict, day_str: str) -> str
     """
     message = "*Du hast " + day_str + " Training um " +\
               training["time"] + " Uhr!*"\
-              "\n\nErwärmung (Beginn um " + training["time"] + "Uhr):" + \
+              "\n\nErwärmung (Beginn um " + training["time"] + " Uhr):" + \
               "\n" + training["link"] +\
               "\n\nDanach Training bei " + subtraining["coach"]["full_name"] + \
               ": \n" + subtraining["link"] + \
