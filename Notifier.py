@@ -24,3 +24,10 @@ class Notifier:
             text=message,
             parse_mode=ParseMode.MARKDOWN,
             disable_web_page_preview=True)
+
+    def message_channel(self, message:str):
+        self.bot.send_message(
+            chat_id=c.CHANNEL_ID,
+            text=message,
+            parse_mode=ParseMode.MARKDOWN,
+            disable_web_page_preview=True)

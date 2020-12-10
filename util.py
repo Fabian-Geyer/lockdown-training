@@ -5,7 +5,7 @@ import string
 from telegram import ReplyKeyboardMarkup, Update
 from telegram.ext import CallbackContext
 
-import Training
+from Training import Training
 import constants as c
 
 
@@ -16,10 +16,11 @@ def action_selector(update: Update):
     """
     reply_keyboard = c.MENU
 
-    msg = 'Hi! Ich bin der Trainings-Bot.' \
-          'Ich helfe dir dein Training zu organisieren.' \
+    msg = 'Hi! Ich bin der Trainings-Bot. ' \
+          'Ich helfe dir dein Training zu organisieren. ' \
           'Sende /{} um zum /{} zurückzukehren.\n\n' \
-          'Was möchtest du tun?'.format(c.CMD_CANCEL, c.CMD_START)
+          'Folge {} um über die Trainings imformiert zu werden.\n\n' \
+          'Was möchtest du tun?'.format(c.CMD_CANCEL, c.CMD_START, c.CHANNEL_ID)
     update.message.reply_text(
         msg,
         reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True),
@@ -100,7 +101,8 @@ def get_training_list(trainings: list, with_commands=False, with_attendees=False
         else:
             msg += "Titel: "
         msg += "{}".format(t.get_title().replace("\n", " "))
-        if with_attendees:
+        msg += "\nAnzahl Teilnehmer: {}".format(len(t.get_attendees()))
+        if with_attendees and len(t.get_attendees()) > 0:
             msg += "\nTeilnehmer: {}".format(", ".join([i.get_full_name() for i in t.get_attendees()]))
         msg += "\n\n"
     if with_commands:

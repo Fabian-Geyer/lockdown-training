@@ -11,10 +11,12 @@ CANCEL_TRAINING = 7
 CANCEL_TRAINING_ATTENDEE = 8
 CANCEL_TRAINING_COACH = 9
 
+
 MEETING_BASE_URL = "https://meet.jit.si/"
 RANDOM_STR_LEN = 20
 
 DEBUG_MODE = False
+CHANNEL_ID = "@debugcoachbotnewsletter" if DEBUG_MODE else "@coachbotnewsletter"
 
 COACH = 100
 ATTENDEE = 101

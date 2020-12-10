@@ -7,6 +7,7 @@ from telegram.ext import CallbackContext
 import constants as c
 import util
 from User import User
+from Notifier import Notifier
 
 logging.basicConfig(
     format=c.LOG_FORMAT, level=logging.INFO, filename="coachbot.log"
@@ -300,6 +301,21 @@ class Training:
             update.message.reply_text(msg)
             db = context.user_data["db"]
             db.add_subtraining(training)
+            if len(training.get_description().strip())>0:
+                description = "*Beschreibung: *" + training.get_description().strip() + "\n\n"
+            else:
+                description = "\n"
+            broadcast_message = "*Neues Training!*\n\n" + \
+                training.get_coach().get_full_name() + \
+                " bietet am " + util.get_readable_date_from_datetime(training.date) + \
+                " ein Training an. \n\n*Titel:* " +\
+                training.get_title() + "\n" + \
+                description + \
+                "Schreibe @gymnastics\_coach\_bot um dich anzumelden."
+            notifier = Notifier()
+            notifier.message_channel(
+                message=broadcast_message
+            )
             util.action_selector(update)
             logger.info("Training data submitted to the database")
             return c.START

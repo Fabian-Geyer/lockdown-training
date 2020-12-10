@@ -6,6 +6,7 @@ from telegram.ext import CallbackContext
 import constants as c
 import util
 from User import User
+from Training import Training
 
 logging.basicConfig(
     format=c.LOG_FORMAT, level=logging.INFO, filename="coachbot.log"
@@ -38,13 +39,15 @@ def bot_attend(update: Update, context: CallbackContext) -> int:
         if len(sub_trainings) == 0:
             msg += "Noch keine Trainings vorhanden\n"
         for st in t["subtrainings"]:
+            subtraining = Training(from_dict=st)
             command = "/training_{}_{}".format(idx, sub_idx)
             commands.append([command])
             msg += "{}: {}\n".format(command, st["title"])
             description = st["description"]
             msg += "<u>Trainer:</u> {}\n".format(st["coach"]["full_name"])
-            if len(description) > 0:
+            if len(description.strip()) > 0:
                 msg += "<u>Info:</u> {}\n".format(st["description"])
+            msg += "<u>Anzahl Teilnehmer:</u> {}\n".format(len(subtraining.get_attendees()))
             msg += "\n"
             sub_idx += 1
         idx += 1
