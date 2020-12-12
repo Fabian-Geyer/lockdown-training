@@ -157,6 +157,8 @@ class Database:
                         or (user in tr.get_attendees() and role == c.ATTENDEE):
                     if util.is_in_future(subtraining["date"]):
                         my_trainings.append(tr)
+        if len(my_trainings) > 0:
+            my_trainings.sort(key=lambda x: x.date, reverse=False)
         return my_trainings
 
     def get_subtrainings(self, user: User) -> list:
