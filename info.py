@@ -26,7 +26,7 @@ def print_info(update: Update, context: CallbackContext) -> int:
     user = User(update.message.chat_id, tg_user)
 
     as_coach = db.get_my_trainings(user, c.COACH, offset=c.INFO_TIMEDELTA)
-    as_attendee = db.get_my_trainings(user, c.ATTENDEE, offset=c.INFO_TIMEDELTA)
+    as_attendee = db.get_my_trainings(user, c.ATTENDEE)
 
     msg = ""
     if len(as_coach) > 0:
