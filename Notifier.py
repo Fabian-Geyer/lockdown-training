@@ -12,10 +12,7 @@ class Notifier:
         # read token from config
         with open("config.json") as f:
             conf = json.load(f)
-        if c.DEBUG_MODE:
-            self.bot = Bot(token=conf["debug_bot_token"])
-        else:
-            self.bot = Bot(token=conf["bot_token"])
+        self.bot = Bot(token=conf[c.BOT_TOKEN])
 
     def notify(self, message: str, chat_id):
         self.bot.send_message(

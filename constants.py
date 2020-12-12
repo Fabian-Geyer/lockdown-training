@@ -17,6 +17,7 @@ RANDOM_STR_LEN = 20
 
 DEBUG_MODE = False
 CHANNEL_ID = "@debugcoachbotnewsletter" if DEBUG_MODE else "@coachbotnewsletter"
+BOT_TOKEN = "debug_bot_token" if DEBUG_MODE else "bot_token"
 
 COACH = 100
 ATTENDEE = 101

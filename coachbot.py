@@ -101,10 +101,7 @@ def main(config_file: str) -> bool:
     # read token from config file
     with open(config_file) as f:
         conf = json.load(f)
-    if c.DEBUG_MODE:
-        bot_token = conf["debug_bot_token"]
-    else:
-        bot_token = conf["bot_token"]
+    bot_token = conf[c.BOT_TOKEN]
 
     # Create the Updater and pass it your bot's token.
     updater = Updater(token=bot_token, use_context=True)
