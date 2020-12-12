@@ -17,6 +17,7 @@ RANDOM_STR_LEN = 20
 
 DEBUG_MODE = False
 CHANNEL_ID = "@debugcoachbotnewsletter" if DEBUG_MODE else "@coachbotnewsletter"
+BOT_TOKEN = "debug_bot_token" if DEBUG_MODE else "bot_token"
 
 COACH = 100
 ATTENDEE = 101
@@ -52,3 +53,5 @@ LOG_FILE = "coachbot.log"
 NOTIFICATION_FREQUENCY_SECONDS = 60
 NEXT_TRAINING_NOTIFY_FAR = datetime.timedelta(days=1)
 NEXT_TRAINING_NOTIFY_NOW = datetime.timedelta(minutes=30)
+
+INFO_TIMEDELTA = datetime.timedelta(hours=1)

@@ -25,7 +25,7 @@ def print_info(update: Update, context: CallbackContext) -> int:
     db = util.get_db(context)
     user = User(update.message.chat_id, tg_user)
 
-    as_coach = db.get_my_trainings(user, c.COACH)
+    as_coach = db.get_my_trainings(user, c.COACH, offset=c.INFO_TIMEDELTA)
     as_attendee = db.get_my_trainings(user, c.ATTENDEE)
 
     msg = ""

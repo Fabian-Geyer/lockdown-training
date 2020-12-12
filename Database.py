@@ -122,22 +122,7 @@ class Database:
         )
         return True
 
-    def get_trainings(self):
-        """return all trainings in the database as a list
-        of dicts
-
-        :return: list of dicts with all trainings and their data
-        :rtype: list of dicts
-        """
-        trainings = self.trainings.find()
-        trainings_list = []
-        for training in trainings:
-            if util.is_in_future(training["date"]):
-                training["date"] = datetime.datetime.fromtimestamp(training["date"])
-                trainings_list.append(training)
-        return trainings_list
-
-    def get_my_trainings(self, user: User, role: int) -> list:
+    def get_my_trainings(self, user: User, role: int, offset=datetime.timedelta(seconds=0)) -> list:
         """return all the subtrainings the user is
         in as specified in the role
 
@@ -145,6 +130,8 @@ class Database:
         :type role: int
         :param user: string with username
         :type user: str
+        :param offset: Timedelta, how long a training can be in the past to be still shown
+        :type offset: datetime.timedelta
         :return: returns the subtrainings as a list of dicts
         :rtype: list
         """
@@ -155,8 +142,10 @@ class Database:
                 tr = Training(from_dict=subtraining)
                 if (user.get_chat_id() == tr.get_coach().get_chat_id() and role == c.COACH)\
                         or (user in tr.get_attendees() and role == c.ATTENDEE):
-                    if util.is_in_future(subtraining["date"]):
+                    if util.is_in_future(subtraining["date"], offset=offset):
                         my_trainings.append(tr)
+        if len(my_trainings) > 0:
+            my_trainings.sort(key=lambda x: x.date, reverse=False)
         return my_trainings
 
     def get_subtrainings(self, user: User) -> list:

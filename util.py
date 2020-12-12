@@ -5,7 +5,7 @@ import string
 from telegram import ReplyKeyboardMarkup, Update
 from telegram.ext import CallbackContext
 
-from Training import Training
+import Training
 import constants as c
 
 
@@ -111,19 +111,19 @@ def get_training_list(trainings: list, with_commands=False, with_attendees=False
         return msg, commands
 
 
-def is_in_future(unix_timestamp: int) -> bool:
+def is_in_future(unix_timestamp: int, offset=datetime.timedelta(seconds=0)) -> bool:
     """Check if given date is in the future or not
 
     :param unix_timestamp: unix timestamp
     :type unix_timestamp: int
-    :return: wether the date is in the futere
+    :param offset: Timedelta, how long a training can be in the past to be still shown
+    :type offset: datetime.timedelta
+    :return: whether the date is in the futere
     :rtype: bool
     """
     now = datetime.datetime.now()
     date = datetime.datetime.fromtimestamp(unix_timestamp)
-    if now < date:
-        return True
-    return False
+    return (now - offset) < date
 
 
 def get_random_string(num_of_chars: int) -> str:

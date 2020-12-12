@@ -301,21 +301,19 @@ class Training:
             update.message.reply_text(msg)
             db = context.user_data["db"]
             db.add_subtraining(training)
-            if len(training.get_description().strip())>0:
+            if len(training.get_description().strip()) > 0:
                 description = "*Beschreibung: *" + training.get_description().strip() + "\n\n"
             else:
                 description = "\n"
             broadcast_message = "*Neues Training!*\n\n" + \
-                training.get_coach().get_full_name() + \
-                " bietet am " + util.get_readable_date_from_datetime(training.date) + \
-                " ein Training an. \n\n*Titel:* " +\
-                training.get_title() + "\n" + \
-                description + \
-                "Schreibe @gymnastics\_coach\_bot um dich anzumelden."
+                                training.get_coach().get_full_name() + \
+                                " bietet am " + util.get_readable_date_from_datetime(training.date) + \
+                                " ein Training an. \n\n*Titel:* " + \
+                                training.get_title() + "\n" + \
+                                description + \
+                                "Schreibe @gymnastics\_coach\_bot um dich anzumelden."
             notifier = Notifier()
-            notifier.message_channel(
-                message=broadcast_message
-            )
+            notifier.notify(message=broadcast_message, chat_id=c.CHANNEL_ID)
             util.action_selector(update)
             logger.info("Training data submitted to the database")
             return c.START

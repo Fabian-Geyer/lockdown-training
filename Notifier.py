@@ -1,6 +1,5 @@
 from telegram import Bot, ParseMode
 import json
-from User import User
 import constants as c
 
 
@@ -13,21 +12,11 @@ class Notifier:
         # read token from config
         with open("config.json") as f:
             conf = json.load(f)
-        if c.DEBUG_MODE:
-            self.bot = Bot(token=conf["debug_bot_token"])
-        else:
-            self.bot = Bot(token=conf["bot_token"])
+        self.bot = Bot(token=conf[c.BOT_TOKEN])
 
-    def notify_user(self, message: str, user: User):
+    def notify(self, message: str, chat_id):
         self.bot.send_message(
-            chat_id=user.get_chat_id(),
-            text=message,
-            parse_mode=ParseMode.MARKDOWN,
-            disable_web_page_preview=True)
-
-    def message_channel(self, message:str):
-        self.bot.send_message(
-            chat_id=c.CHANNEL_ID,
+            chat_id=chat_id,
             text=message,
             parse_mode=ParseMode.MARKDOWN,
             disable_web_page_preview=True)
