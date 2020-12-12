@@ -5,7 +5,7 @@ import string
 from telegram import ReplyKeyboardMarkup, Update
 from telegram.ext import CallbackContext
 
-from Training import Training
+import Training
 import constants as c
 
 
