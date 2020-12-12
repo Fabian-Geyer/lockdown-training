@@ -122,22 +122,7 @@ class Database:
         )
         return True
 
-    def get_trainings(self):
-        """return all trainings in the database as a list
-        of dicts
-
-        :return: list of dicts with all trainings and their data
-        :rtype: list of dicts
-        """
-        trainings = self.trainings.find()
-        trainings_list = []
-        for training in trainings:
-            if util.is_in_future(training["date"]):
-                training["date"] = datetime.datetime.fromtimestamp(training["date"])
-                trainings_list.append(training)
-        return trainings_list
-
-    def get_my_trainings(self, user: User, role: int) -> list:
+    def get_my_trainings(self, user: User, role: int, offset=datetime.timedelta(seconds=0)) -> list:
         """return all the subtrainings the user is
         in as specified in the role
 
