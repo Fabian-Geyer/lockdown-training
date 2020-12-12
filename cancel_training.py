@@ -169,7 +169,8 @@ def cancel_training_coach(update: Update, context: CallbackContext) -> int:
     msg = "Du hast das Training am {} abgesagt".format(date)
     notifier = Notifier()
     for attendee in cancelled_training.get_attendees():
-        notifier.notify_user("Das Training am *{}* wurde leider *abgesagt* \U0001F625".format(date), attendee)
+        notifier.notify("Das Training am *{}* wurde leider *abgesagt* \U0001F625".format(date),
+                        attendee.get_chat_id())
 
     update.message.reply_text(
         msg,

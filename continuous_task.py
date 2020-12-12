@@ -70,7 +70,7 @@ def notify_user(db: Database, sub_tr: Training, notifier: Notifier, user: User, 
             return
         db.set_notify_far_flag(True, sub_tr, user)
 
-    notifier.notify_user(message=message, user=user)
+    notifier.notify(message=message, chat_id=user.get_chat_id())
 
 
 def notify_all_attendees(db: Database, training: dict, notifier: Notifier, time_to_training: datetime.timedelta):
