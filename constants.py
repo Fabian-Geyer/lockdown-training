@@ -15,7 +15,7 @@ CANCEL_TRAINING_COACH = 9
 MEETING_BASE_URL = "https://meet.jit.si/"
 RANDOM_STR_LEN = 20
 
-DEBUG_MODE = False
+DEBUG_MODE = True
 CHANNEL_ID = "@debugcoachbotnewsletter" if DEBUG_MODE else "@coachbotnewsletter"
 BOT_TOKEN = "debug_bot_token" if DEBUG_MODE else "bot_token"
 

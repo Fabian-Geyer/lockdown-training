@@ -3,6 +3,7 @@ import json
 import os
 
 import pymongo
+from bson.objectid import ObjectId
 
 from User import User
 import constants as c
@@ -229,7 +230,7 @@ class Database:
                     if res is None:
                         self.add_training(training_date=day, time=training["time"])
 
-    def next_trainings(self, number_of_trainings: int):
+    def next_trainings(self, number_of_trainings=0, all=False):
         """return the next n trainings from the database as a
         list of dicts
 
@@ -243,7 +244,7 @@ class Database:
 
         added_trainings = 0
         for tr in trainings_list:
-            if added_trainings >= number_of_trainings:
+            if added_trainings >= number_of_trainings and all is False:
                 break
             if util.is_in_future(tr["date"]):
                 tr["date"] = datetime.datetime.fromtimestamp(tr["date"])
@@ -256,6 +257,13 @@ class Database:
         """
         self.trainings.drop()
 
+    def delete_future_trainings(self):
+        """delete all trainings in the future
+        """
+        trainings = self.next_trainings(all=True)
+        for training in trainings:
+            self.trainings.delete_one({'_id': ObjectId(training["_id"])})
+        
     def set_notify_now_flag(self, flag: bool, subtraining: Training, user: User):
         training = self.trainings.find_one({"date": int(subtraining.get_date())})
         for sub in training["subtrainings"]:

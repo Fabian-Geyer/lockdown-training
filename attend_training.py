@@ -25,7 +25,7 @@ def bot_attend(update: Update, context: CallbackContext) -> int:
 
     # Get database data
     db = util.get_db(context)
-    next_trainings = db.next_trainings(c.FUTURE_TRAININGS)
+    next_trainings = db.next_trainings(number_of_trainings=c.FUTURE_TRAININGS)
 
     commands = []
     msg = "An welchem Training möchtest du teilnehmen?\n\n"
@@ -84,7 +84,7 @@ def bot_attend_save(update: Update, context: CallbackContext) -> int:
 
     # Extract the necessary data from the database
     db = util.get_db(context)
-    next_trainings = db.next_trainings(c.FUTURE_TRAININGS)
+    next_trainings = db.next_trainings(number_of_trainings=c.FUTURE_TRAININGS)
     training = next_trainings[t_idx]
     sub_training = training["subtrainings"][st_idx]
     date = training["date"]

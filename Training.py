@@ -136,7 +136,7 @@ class Training:
         """
         db = context.user_data["db"]
         user = User(update.message.chat_id, update.message.from_user)
-        next_trainings_all = db.next_trainings(c.FUTURE_TRAININGS)
+        next_trainings_all = db.next_trainings(number_of_trainings=c.FUTURE_TRAININGS)
         next_trainings = []
         for t in next_trainings_all:
             coaches = []
