@@ -313,8 +313,8 @@ class Training:
                                 description + \
                                 "Schreibe @gymnastics\_coach\_bot um dich anzumelden."
             notifier = Notifier()
-            notifier.notify(message=broadcast_message, chat_id=c.CHANNEL_ID)
-            util.action_selector(update)
+            notifier.notify(message=broadcast_message, chat_id=context.user_data["channel_id"])
+            util.action_selector(update, context)
             logger.info("Training data submitted to the database")
             return c.START
         else:

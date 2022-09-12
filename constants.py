@@ -16,7 +16,7 @@ MEETING_BASE_URL = "https://meet.jit.si/"
 RANDOM_STR_LEN = 20
 
 DEBUG_MODE = False
-CHANNEL_ID = "@debugcoachbotnewsletter" if DEBUG_MODE else "@coachbotnewsletter"
+CHANNEL_KEY = "debug_channel_id" if DEBUG_MODE else "channel_id"
 BOT_TOKEN = "debug_bot_token" if DEBUG_MODE else "bot_token"
 
 COACH = 100

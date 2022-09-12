@@ -38,13 +38,16 @@ def start(update: Update, context: CallbackContext) -> int:
     # Init data
     # Enable logging
     db = Database(c.CONFIG_FILE, debug_mode=c.DEBUG_MODE)
+    
+    channel_id = util.get_channel_id()
     training = Training()
 
     # Store data in user context
     context.user_data["db"] = db
     context.user_data["training"] = training
+    context.user_data["channel_id"] = channel_id
 
-    util.action_selector(update)
+    util.action_selector(update, context)
     return c.START
 
 
@@ -61,7 +64,7 @@ def cancel(update: Update, context: CallbackContext) -> int:
         'Abbruch... Zurück zum Hauptmenü.', reply_markup=ReplyKeyboardRemove()
     )
     util.reset_data(context)
-    util.action_selector(update)
+    util.action_selector(update, context)
     return c.START
 
 

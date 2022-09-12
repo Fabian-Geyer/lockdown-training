@@ -1,6 +1,8 @@
 import datetime
 import random
 import string
+import json
+from typing import Tuple, List
 
 from telegram import ReplyKeyboardMarkup, Update
 from telegram.ext import CallbackContext
@@ -9,18 +11,33 @@ import Training
 import constants as c
 
 
-def action_selector(update: Update):
+def get_channel_id():
+    """
+    Get the telegram channel id from the config file
+    """
+    with open(c.CONFIG_FILE) as config_file:
+        db_conf = json.load(config_file)
+        
+    return db_conf[c.CHANNEL_KEY] if c.CHANNEL_KEY in db_conf.keys() else None
+
+
+def action_selector(update: Update, context: CallbackContext):
     """
     Main menu of the bot.
     :param update: Chat bot update object
     """
     reply_keyboard = c.MENU
 
+    channel_id = context.user_data["channel_id"]
+    channel_hint = ""
+    if channel_id is not None:
+        channel_hint = f"Folge {channel_id} um über die Trainings informiert zu werden."
+
     msg = 'Hi! Ich bin der Trainings-Bot. ' \
           'Ich helfe dir dein Training zu organisieren. ' \
           'Sende /{} um zum /{} zurückzukehren.\n\n' \
-          'Folge {} um über die Trainings imformiert zu werden.\n\n' \
-          'Was möchtest du tun?'.format(c.CMD_CANCEL, c.CMD_START, c.CHANNEL_ID)
+          '{}\n\n' \
+          'Was möchtest du tun?'.format(c.CMD_CANCEL, c.CMD_START, channel_hint)
     update.message.reply_text(
         msg,
         reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True),
@@ -81,7 +98,7 @@ def get_readable_date_from_datetime(date: datetime) -> str:
     return date.strftime(c.DATE_FORMAT)
 
 
-def get_training_list(trainings: list, with_commands=False, with_attendees=False) -> [str, list]:
+def get_training_list(trainings: list, with_commands=False, with_attendees=False) -> Tuple[str, List[str]]:
     """
     Get a list of trainings as formatted text.
     If needed commands to select each training can be generated

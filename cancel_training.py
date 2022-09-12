@@ -71,7 +71,7 @@ def cancel_training_selector(update: Update, context: CallbackContext) -> int:
             parse_mode=ParseMode.MARKDOWN,
         )
         # Start again
-        util.action_selector(update)
+        util.action_selector(update, context)
         return c.START
 
     update.message.reply_text(
@@ -144,7 +144,7 @@ def cancel_training_attendee(update: Update, context: CallbackContext) -> int:
         parse_mode=ParseMode.MARKDOWN,
     )
     # Start again
-    util.action_selector(update)
+    util.action_selector(update, context)
     return c.START
 
 
@@ -177,5 +177,5 @@ def cancel_training_coach(update: Update, context: CallbackContext) -> int:
         parse_mode=ParseMode.MARKDOWN,
     )
     # Start again
-    util.action_selector(update)
+    util.action_selector(update, context)
     return c.START

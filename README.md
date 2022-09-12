@@ -19,8 +19,8 @@ The importand thing you need here is the bot token.
 
 ### Telegram channel
 The information of new trainings is published through a telegram channel.
-The name is specified in `constants.py` in the constant `CHANNEL_ID`.
-You have to create the channel and put the correct name in there.
+You have to create the channel and put the name later in the config file.
+For developing a separate channel is recommended.
 
 ### Mongo DB
 This project was tested with a mongo DB hosted on [https://account.mongodb.com/account/login](https://account.mongodb.com/account/login).
@@ -40,7 +40,9 @@ If you did the above steps you can create your configuration file `config.json` 
         },
     ],
     "database-connect-string": "mongodb+srv://your-mongo-db-connect-str",
-    "num_trainings": <int of how many trainings should be initialized>
+    "num_trainings": <int of how many trainings should be initialized>,
+    "channel_id": <update channel id>,
+    "debug_channel_id": <update channel id for development>
 }
 ```
 The trainings list represent the day of the week and time when trainings are possible.
