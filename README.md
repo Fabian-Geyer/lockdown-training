@@ -3,7 +3,7 @@
 Telegram bot to organize the gymnastics training or any other fitness training at home based on python and a mongo db.
 Mainly developed for the awesome artistic gymnastics lads from stuttgart.
 
-The bot allows you to offer online trainings for your friends and they can also offer trainings themselfes.
+The bot allows you to offer online trainings for your friends and they can also offer trainings themselves.
 
 ## Usage
 
